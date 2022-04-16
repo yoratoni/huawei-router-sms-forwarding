@@ -1,19 +1,15 @@
-from huawei_lte_api.AuthorizedConnection import AuthorizedConnection
-from huawei_lte_api.enums.sms import BoxTypeEnum
-from huawei_lte_api.Connection import Connection
-from huawei_lte_api.Client import Client
-from huawei_lte_api.api.User import User
+from libs import HuaweiWrapper
 
-import huawei_lte_api.exceptions
+import time
+import sys
+import os
 
 
-# Main loop
-while True:
-    try:
-        pass
-    except huawei_lte_api.exceptions.ResponseErrorLoginRequiredException as e:
-        print(_('Session timeout, login again!'))
-    except huawei_lte_api.exceptions.LoginErrorAlreadyLoginException as e:
-        client.user.logout()
-    except Exception as e:
-        print(_('Router connection failed! Please check the settings. \nError message:\n{error_msg}').format(error_msg=e))
+main_env_dict = HuaweiWrapper.get_formatted_env()
+
+client = HuaweiWrapper.connect_to_api(main_env_dict["URI"])
+
+# if client.sms.send_sms([main_env_dict["RECEIVER_PHONE_NUMBER"]], "Yo") == "OK":
+#     print("SMS success")
+    
+print(HuaweiWrapper.get_last_sms(client, False))
