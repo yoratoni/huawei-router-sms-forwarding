@@ -1,2 +1,2 @@
 # huawei-router-sms
- A simple CLI program used to reroute SMS to another number.
+ A simple CLI program used to forward SMS to another number.

@@ -1,3 +1,6 @@
+from datetime import date, datetime
+
+
 class AppUtils:
     @staticmethod
     def string_list_to_list(input: str) -> list:
@@ -27,4 +30,24 @@ class AppUtils:
                 output[i] = elem[1:-1]
 
         return output
+        
+    
+    @staticmethod
+    def format_date(sms_date: str) -> str:
+        """Used to format the date inside the forwarded SMS.
+
+        Args:
+            sms_date (str): The original string date coming from the SMS dict.
+
+        Returns:
+            str: Formatted date depending on the day.
+        """
+        
+        sms_datetime = datetime.strptime(sms_date, "%Y-%m-%d %H:%M:%S")
+  
+        # Same day -> Only time
+        if sms_datetime.day == datetime.today().day:
+            return sms_datetime.strftime("%H:%M:%S")
+
+        return sms_date
         
