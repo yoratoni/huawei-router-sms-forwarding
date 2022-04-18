@@ -4,7 +4,6 @@ from huawei_lte_api.enums.sms import BoxTypeEnum
 from huawei_lte_api.Client import Client
 
 from pyostra import pyprint, LogTypes
-from dotenv import load_dotenv
 from libs import AppUtils
 from typing import Union
 
@@ -15,73 +14,6 @@ import os
 
 
 class HuaweiWrapper:
-    # Object of the client (huawei_lte_api.Client -> Client)
-    CLIENT_OBJ = None
-    
-    
-    @staticmethod
-    def get_formatted_env() -> dict:
-        """Returns a dict containing the parsed .env file
-        with all the data used for the Huawei API.
-
-        Keys:
-            - URI: Formatted URI for the API connection.
-            - ROUTER_PHONE_NUMBER: International number of the router.
-            - USER_PHONE_NUMBER: International number of the user (used for SMS forwarding).
-            - LOOP_DELAY: Time in seconds between two iterations of the main infinite loop.
-            - SENDERS_WHITELIST: Whitelist containing available senders for forwarding.
-            
-        Returns:
-            dict: Parsed dict containing all the .env file variables.
-        """
-        
-        # Loads the .env file and add as environment variables
-        env_path = os.path.join(os.getcwd(), "src", ".env")
-        load_dotenv(env_path)
-        
-        # Get internal env vars
-        internal_dict = {
-            "ROUTER_IP_ADDRESS": None,
-            "LOOP_DELAY": None,
-            "ACCOUNT_USERNAME": None,
-            "ACCOUNT_PASSWORD": None,
-            "ROUTER_PHONE_NUMBER": None,
-            "USER_PHONE_NUMBER": None,
-            "SENDERS_WHITELIST": None,
-        }
-
-        for key in internal_dict.keys():
-            value = os.getenv(key)
-            
-            if value is None:
-                pyprint(LogTypes.CRITICAL, f"{key}: Missing input, please verify the .env file.")
-                sys.exit(1)
-                
-            internal_dict[key] = value
-            
-        # Dict containing formatted outputs used for the Huawei API
-        system_dict = {}
-        
-        # Formatted connection URI
-        system_dict["URI"] = "http://{0}:{1}@{2}".format(
-            internal_dict["ACCOUNT_USERNAME"],
-            internal_dict["ACCOUNT_PASSWORD"],
-            internal_dict["ROUTER_IP_ADDRESS"]
-        )
-        
-        # Phone numbers
-        system_dict["ROUTER_PHONE_NUMBER"] = internal_dict["ROUTER_PHONE_NUMBER"].replace(" ", "")
-        system_dict["USER_PHONE_NUMBER"] = internal_dict["USER_PHONE_NUMBER"].replace(" ", "")
-        
-        # Delay used for the loop
-        system_dict["LOOP_DELAY"] = int(internal_dict["LOOP_DELAY"])
-        
-        # SMS senders whitelist
-        system_dict["SENDERS_WHITELIST"] = AppUtils.string_list_to_list(internal_dict["SENDERS_WHITELIST"])
-
-        return system_dict
-
-
     @staticmethod
     def connect_to_api(uri: str) -> Union[Client, None]:
         """Connect to the API and returns the client object (with full exception handling).
@@ -249,10 +181,11 @@ class HuaweiWrapper:
 
 
     @staticmethod
-    def format_sms(sms: dict) -> str:
+    def format_sms(contacts: dict, sms: dict) -> str:
         """Use the SMS dict info to format a messages used for the forwarding.
 
         Args:
+            contacts (dict): Dict of available contacts that replaces the raw phone numbers.
             sms (dict): Original SMS dict.
 
         Returns:
@@ -263,6 +196,10 @@ class HuaweiWrapper:
         sms_date = AppUtils.format_date(sms["Date"])
         sms_sender = sms["Phone"]
         sms_content = sms["Content"]
+    
+        # Replaces the number by a contact name
+        if sms_sender in contacts.keys():
+            sms_sender = contacts[sms_sender]
     
         # Formatted string
         formatted_sms = f"Forwarded SMS:\nFrom {sms_sender}:\n({sms_date})\n\n{sms_content}"
