@@ -23,5 +23,3 @@ while True:
     # Disconnect from the router if possible
     except KeyboardInterrupt:
         HuaweiWrapper.disconnect(client)
-
-        sys.exit(1)

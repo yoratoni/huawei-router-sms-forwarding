@@ -110,7 +110,10 @@ class HuaweiWrapper:
                 sys.exit(1)
             
             iteration += 1
-            time.sleep(5)
+            
+            # New attempt every 5 seconds
+            if client is None:
+                time.sleep(5)
             
         return client
         
@@ -130,6 +133,8 @@ class HuaweiWrapper:
                 pyprint(LogTypes.INFO, "Successfully disconnected from the router")
         except Exception:
             pass
+        
+        sys.exit(1)
         
 
     @staticmethod
@@ -206,12 +211,15 @@ class HuaweiWrapper:
         sms_read_state = int(sms_list["Messages"]["Message"]["Smstat"])
         sms = sms_list["Messages"]["Message"]
         
+        
         # SMS already read
         if ignore_read and sms_read_state == 1:
             sms = None
 
         # Verify that the last sent SMS have not the same ID
-        if HuaweiWrapper.unique_sms_id_check(sms) and sms is not None:
+        sms_uniqueness = HuaweiWrapper.unique_sms_id_check(sms)
+        
+        if sms_uniqueness and sms is not None:
             # Get useful SMS data
             sms_date = sms["Date"]
             sms_sender = sms["Phone"]
