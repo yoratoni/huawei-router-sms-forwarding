@@ -14,6 +14,11 @@ import os
 
 
 class HuaweiWrapper:
+    # Used to avoid sending the same SMS multiple times
+    # In the case of a SMS received at the exact same time as a new iteration
+    LAST_SMS_ID = ""
+    
+    
     @staticmethod
     def connect_to_api(uri: str) -> Union[Client, None]:
         """Connect to the API and returns the client object (with full exception handling).
@@ -41,8 +46,11 @@ class HuaweiWrapper:
         
         except HuaweiExceptions.LoginErrorAlreadyLoginException:
             log_state = LogTypes.WARN
-            log_msg = "Client is already logged in but a new attempt has been made"
-
+            log_msg = textwrap.dedent(f"""\
+                Client is already logged in but a new attempt has been made,
+                wait until the Huawei router automatically disconnect old clients.
+                """)
+            
         except Exception as err:
             log_state = LogTypes.CRITICAL
             log_msg = f"Router connection failed! Please check the .env settings\n{err}"
@@ -106,6 +114,48 @@ class HuaweiWrapper:
             
         return client
         
+    
+    @staticmethod
+    def disconnect(client: Union[Client, None]):
+        """Try-except disconnection from the Huawei Router.
+
+        Args:
+            client (Union[Client, None]): To test if the client is already connected.
+        """
+        
+        try:
+            # If client instance exists, disconnect from the router
+            if client is not None:
+                client.user.logout()
+                pyprint(LogTypes.INFO, "Successfully disconnected from the router")
+        except Exception:
+            pass
+        
+
+    @staticmethod
+    def unique_sms_id_check(sms: dict) -> bool:
+        """Used to avoid sending the same SMS multiple times
+        in the case of a SMS received at the exact same time as a new iteration.
+
+        Note:
+            Saves the last SMS ID and verify that it is not already sent.
+
+        Args:
+            sms (dict): The last received SMS dict.
+
+        Returns:
+            bool: True if the SMS can be sent.
+        """
+        
+        if sms is not None and "Index" in sms.keys():
+            ID = sms["Index"]
+            
+            if ID != HuaweiWrapper.LAST_SMS_ID:
+                HuaweiWrapper.LAST_SMS_ID = ID
+                return True
+            else:
+                return False
+        
 
     @staticmethod
     def is_sms_whitelisted(sms_sender: str, senders_whitelist: list[str]) -> bool:
@@ -152,32 +202,33 @@ class HuaweiWrapper:
         """
         
         # Get last received SMS (Unread priority)
-        sms = client.sms.get_sms_list(1, BoxTypeEnum.LOCAL_INBOX, 1, 0, 0, 1)
-        sms_read_state = int(sms["Messages"]["Message"]["Smstat"])
-        unique_sms = sms["Messages"]["Message"]
+        sms_list = client.sms.get_sms_list(1, BoxTypeEnum.LOCAL_INBOX, 1, 0, 0, 1)
+        sms_read_state = int(sms_list["Messages"]["Message"]["Smstat"])
+        sms = sms_list["Messages"]["Message"]
         
         # SMS already read
         if ignore_read and sms_read_state == 1:
-            unique_sms = None
+            sms = None
 
-        if unique_sms is not None:
+        # Verify that the last sent SMS have not the same ID
+        if HuaweiWrapper.unique_sms_id_check(sms) and sms is not None:
             # Get useful SMS data
-            sms_date = unique_sms["Date"]
-            sms_sender = unique_sms["Phone"]
+            sms_date = sms["Date"]
+            sms_sender = sms["Phone"]
             
             # Whitelist system (If the whitelist is deactivated, all new SMS are whitelisted)
             is_whitelisted = HuaweiWrapper.is_sms_whitelisted(sms_sender, senders_whitelist)
 
             if is_whitelisted:
                 # Set the SMS status to read
-                client.sms.set_read(int(unique_sms["Index"]))
+                client.sms.set_read(int(sms["Index"]))
                 
                 # Main Log
                 pyprint(LogTypes.DATA, f"({sms_date}) New SMS received from {sms_sender}")
         else:
             pyprint(LogTypes.INFO, "No new SMS found..")
         
-        return unique_sms
+        return sms
 
 
     @staticmethod
@@ -202,7 +253,7 @@ class HuaweiWrapper:
             sms_sender = contacts[sms_sender]
     
         # Formatted string
-        formatted_sms = f"Forwarded SMS:\nFrom {sms_sender}:\n({sms_date})\n\n{sms_content}"
+        formatted_sms = f"({sms_date}) From {sms_sender}:\n\n{sms_content}"
         
         return formatted_sms
 
