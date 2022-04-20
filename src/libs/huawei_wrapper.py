@@ -4,7 +4,7 @@ from huawei_lte_api.enums.sms import BoxTypeEnum
 from huawei_lte_api.Client import Client
 
 from pyostra import pyprint, LogTypes
-from libs import AppUtils
+from libs import CacheSystem, AppUtils
 from typing import Union
 
 import textwrap
@@ -117,7 +117,7 @@ class HuaweiWrapper:
             
         return client
         
-    
+
     @staticmethod
     def disconnect(client: Union[Client, None]):
         """Try-except disconnection from the Huawei Router.
@@ -240,12 +240,12 @@ class HuaweiWrapper:
 
 
     @staticmethod
-    def format_sms(contacts: dict, sms: dict) -> str:
+    def format_sms(sms: dict, contacts: dict) -> str:
         """Use the SMS dict info to format a messages used for the forwarding.
 
         Args:
-            contacts (dict): Dict of available contacts that replaces the raw phone numbers.
             sms (dict): Original SMS dict.
+            contacts (dict): Dict of available contacts that replaces the raw phone numbers.
 
         Returns:
             str: Formatted string of the message.
@@ -267,32 +267,55 @@ class HuaweiWrapper:
 
 
     @staticmethod
-    def send_sms(client: Client, user_phone_number: str, sms_content: str) -> bool:
-        """Allows to send an SMS to a number (international formatted such as "+33937023216")
-        includes print statements depending on the result.
+    def send_sms(client: Client, sms_content: str, phone_number: str) -> bool:
+        """Allows to send an SMS to a number (international formatted such as "+33937023216").
 
         Args:
             client (Client): Returned from HuaweiWrapper.connect_to_api().
-            user_phone_number (str): Phone number of the user (example: "+33937023216").
-            sms_content (str): Content of the SMS to send.
+            sms_content (str): Content of the original SMS dictionnary.
+            phone_number (str): String formatted phone number (example: "+33937023216").
 
         Returns:
             bool: True if the SMS has been correctly sent to the user.
         """
         
         try:
-            sms_response = False
+            # Sending SMS request
+            sms_request = client.sms.send_sms([phone_number], sms_content)
             
-            # Main SMS sending request
-            sms_request = client.sms.send_sms([user_phone_number], sms_content)
-            
-            # The huawei_lte_api SMS system returns "OK" instead of a boolean
+            # huawei_lte_api SMS system returns "OK" instead of a boolean..
             if sms_request == "OK":
-                sms_response = True
-                pyprint(LogTypes.SUCCESS, f"SMS correctly forwarded to {user_phone_number}", True)
-                
+                return True
+            
         except Exception as err:
-            sms_response = False
-            pyprint(LogTypes.ERROR, f"SMS cannot be forwarded to {user_phone_number}:\nReason: {err}", True)
-         
-        return sms_response
+            pyprint(LogTypes.ERROR, f"SMS cannot be sent to {phone_number}:\nReason: {err}", True)
+            return False
+
+
+    @staticmethod
+    def forward_sms(client: Client, sms: dict, contacts: dict, phone_number: str) -> bool:
+        """Allows to forward a formatted SMS to another phone number,
+        includes contacts & Cache systems.
+
+        Args:
+            client (Client): Returned from HuaweiWrapper.connect_to_api().
+            sms (dict): Original SMS dictionnary.
+            contacts (dict): List of contacts that replaces the raw phone numbers (inside .env file).
+            phone_number (str): String formatted phone number (example: "+33937023216").
+
+        Returns:
+            bool: _description_
+        """
+
+        if type(sms) == dict:
+            # String formatted content of the SMS
+            sms_content = HuaweiWrapper.format_sms(sms, contacts)
+            
+            # Sending SMS request
+            request = HuaweiWrapper.send_sms(client, sms_content, phone_number)
+            
+            if request:
+                # Add the SMS dict to the cache
+                CacheSystem.add_to_cache(sms)
+                
+                

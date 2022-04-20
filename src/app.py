@@ -14,9 +14,13 @@ while True:
         client = HuaweiWrapper.api_connection_loop(client, system_dict["URI"])
         last_sms = HuaweiWrapper.get_last_sms(client, system_dict["SENDERS_WHITELIST"])
 
-        if last_sms is not None and "Content" in last_sms:
-            formatted_sms = HuaweiWrapper.format_sms(system_dict["CONTACTS"], last_sms)
-            # HuaweiWrapper.send_sms(client, system_dict["USER_PHONE_NUMBER"], formatted_sms)
+        # Main SMS forwarding function
+        HuaweiWrapper.forward_sms(
+            client,
+            last_sms,
+            system_dict["CONTACTS"],
+            system_dict["USER_PHONE_NUMBER"]
+        )
         
         time.sleep(system_dict["LOOP_DELAY"])
     
