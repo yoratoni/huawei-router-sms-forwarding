@@ -31,7 +31,9 @@ class AppHistory:
             try:
                 # Add the contact name
                 if sms_sender in contacts.keys():
-                    sep_sms["Contact"] = contacts[sms_sender]
+                    sep_sms["ContactName"] = contacts[sms_sender]
+                else:
+                    sep_sms["ContactName"] = "NONE (Add it to the .env file)"
                 
                 # Useless info for the history
                 sep_sms.pop("Smstat")
