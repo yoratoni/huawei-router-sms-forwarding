@@ -4,7 +4,7 @@ from huawei_lte_api.enums.sms import BoxTypeEnum
 from huawei_lte_api.Client import Client
 
 from pyostra import pyprint, LogTypes
-from libs import CacheSystem, AppUtils
+from libs import AppHistory, AppUtils
 from typing import Union
 
 import textwrap
@@ -74,7 +74,7 @@ class HuaweiWrapper:
             uri (str): URI generated from HuaweiWrapper.get_formatted_env() ("URI" key).
 
         Returns:
-            Client: Returns the updated client.
+            Client: The updated client.
         """
 
         # Infinite loop limit
@@ -130,6 +130,7 @@ class HuaweiWrapper:
             # If client instance exists, disconnect from the router
             if client is not None:
                 client.user.logout()
+                AppHistory.save_history()
                 pyprint(LogTypes.INFO, "Successfully disconnected from the router")
         except Exception:
             pass
@@ -261,7 +262,7 @@ class HuaweiWrapper:
             sms_sender = contacts[sms_sender]
     
         # Formatted string
-        formatted_sms = f"({sms_date}) From {sms_sender}:\n\n{sms_content}"
+        formatted_sms = f"[{sms_date}] New SMS from {sms_sender}:\n\n{sms_content}"
         
         return formatted_sms
 
@@ -271,7 +272,7 @@ class HuaweiWrapper:
         """Allows to send an SMS to a number (international formatted such as "+33937023216").
 
         Args:
-            client (Client): Returned from HuaweiWrapper.connect_to_api().
+            client (Client): Returned from HuaweiWrapper.api_connection_loop().
             sms_content (str): Content of the original SMS dictionnary.
             phone_number (str): String formatted phone number (example: "+33937023216").
 
@@ -279,43 +280,56 @@ class HuaweiWrapper:
             bool: True if the SMS has been correctly sent to the user.
         """
         
+        gen_state = False
+        error_reason = ""
+        
         try:
             # Sending SMS request
             sms_request = client.sms.send_sms([phone_number], sms_content)
             
             # huawei_lte_api SMS system returns "OK" instead of a boolean..
             if sms_request == "OK":
-                return True
+                gen_state = True
+            else:
+                gen_state = False
+                error_reason = "Huawei LTE API returned an invalid response"
             
         except Exception as err:
-            pyprint(LogTypes.ERROR, f"SMS cannot be sent to {phone_number}:\nReason: {err}", True)
-            return False
+            gen_state = False
+            error_reason = err
 
+        if not gen_state:
+            pyprint(LogTypes.ERROR, f"SMS cannot be sent to {phone_number} [{error_reason}]")
+        else:
+            pyprint(LogTypes.SUCCESS, f"SMS correctly forwarded to {phone_number}")
+
+        return gen_state
+    
 
     @staticmethod
     def forward_sms(client: Client, sms: dict, contacts: dict, phone_number: str) -> bool:
         """Allows to forward a formatted SMS to another phone number,
-        includes contacts & Cache systems.
+        includes contacts & history systems.
 
         Args:
-            client (Client): Returned from HuaweiWrapper.connect_to_api().
+            client (Client): Returned from HuaweiWrapper.api_connection_loop().
             sms (dict): Original SMS dictionnary.
-            contacts (dict): List of contacts that replaces the raw phone numbers (inside .env file).
+            contacts (dict): List of contacts that replaces the raw phone numbers (inside the .env file).
             phone_number (str): String formatted phone number (example: "+33937023216").
 
         Returns:
             bool: _description_
         """
 
-        if type(sms) == dict:
-            # String formatted content of the SMS
+        if sms is not None:
+            # String formatted SMS content
             sms_content = HuaweiWrapper.format_sms(sms, contacts)
             
-            # Sending SMS request
-            request = HuaweiWrapper.send_sms(client, sms_content, phone_number)
+            # SMS sending request
+            api_response = HuaweiWrapper.send_sms(client, sms_content, phone_number)
             
-            if request:
-                # Add the SMS dict to the cache
-                CacheSystem.add_to_cache(sms)
-                
-                
+            if api_response:
+                AppHistory.add_to_history(sms, contacts)
+                return True
+            
+        return False
