@@ -98,6 +98,7 @@ class AppHistory:
         # Creates the file if not initialized
         if not os.path.exists(AppHistory.HISTORY_PATH):
             AppHistory.save_history()
+            pyprint(LogTypes.INFO, f"History file created")
             return False
 
         with open(AppHistory.HISTORY_PATH, "r") as history_file:
