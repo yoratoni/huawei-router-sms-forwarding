@@ -29,5 +29,5 @@ while True:
         time.sleep(system_dict["LOOP_DELAY"])
     
     # Disconnect from the router if possible
-    except KeyboardInterrupt:
+    except Exception:
         HuaweiWrapper.disconnect(client)

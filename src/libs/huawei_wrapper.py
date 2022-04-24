@@ -207,35 +207,39 @@ class HuaweiWrapper:
                 None if no SMS found or if the SMS is already read and "ignore_read" is set to True.
         """
         
-        # Get last received SMS (Unread priority)
-        sms_list = client.sms.get_sms_list(1, BoxTypeEnum.LOCAL_INBOX, 1, 0, 0, 1)
-        sms_read_state = int(sms_list["Messages"]["Message"]["Smstat"])
-        sms = sms_list["Messages"]["Message"]
-        
-        
-        # SMS already read
-        if ignore_read and sms_read_state == 1:
-            sms = None
-
-        # Verify that the last sent SMS have not the same ID
-        sms_uniqueness = HuaweiWrapper.unique_sms_id_check(sms)
-        
-        if sms_uniqueness and sms is not None:
-            # Get useful SMS data
-            sms_date = sms["Date"]
-            sms_sender = sms["Phone"]
+        try:
+            # Get last received SMS (Unread priority)
+            sms_list = client.sms.get_sms_list(1, BoxTypeEnum.LOCAL_INBOX, 1, 0, 0, 1)
+            sms_read_state = int(sms_list["Messages"]["Message"]["Smstat"])
+            sms = sms_list["Messages"]["Message"]
             
-            # Whitelist system (If the whitelist is deactivated, all new SMS are whitelisted)
-            is_whitelisted = HuaweiWrapper.is_sms_whitelisted(sms_sender, senders_whitelist)
+            # SMS already read
+            if ignore_read and sms_read_state == 1:
+                sms = None
 
-            if is_whitelisted:
-                # Set the SMS status to read
-                client.sms.set_read(int(sms["Index"]))
+            # Verify that the last sent SMS have not the same ID
+            sms_uniqueness = HuaweiWrapper.unique_sms_id_check(sms)
+            
+            if sms_uniqueness and sms is not None:
+                # Get useful SMS data
+                sms_date = sms["Date"]
+                sms_sender = sms["Phone"]
                 
-                # Main Log
-                pyprint(LogTypes.DATA, f"({sms_date}) New SMS received from {sms_sender}")
-        else:
-            pyprint(LogTypes.INFO, "No new SMS found..")
+                # Whitelist system (If the whitelist is deactivated, all new SMS are whitelisted)
+                is_whitelisted = HuaweiWrapper.is_sms_whitelisted(sms_sender, senders_whitelist)
+
+                if is_whitelisted:
+                    # Set the SMS status to read
+                    client.sms.set_read(int(sms["Index"]))
+                    
+                    # Main Log
+                    pyprint(LogTypes.DATA, f"({sms_date}) New SMS received from {sms_sender}")
+            else:
+                pyprint(LogTypes.INFO, "No new SMS found..")
+                
+        except Exception as err:
+            pyprint(LogTypes.ERROR, f"Last SMS received by the router cannot be returned [{err}]")
+            sms = None
         
         return sms
 
