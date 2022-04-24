@@ -34,7 +34,7 @@ USER_PHONE_NUMBER=""
 
 # Senders whitelist
 # Example: ["+33937023216"] means that only SMS sent by this number are forwarded
-# Leaving the list empty or removing everything after the equal sign deactivates this option
+# Leaving the list empty deactivates this option
 # Spaces and uppercase characters have no effect (they are removed during the sender comparison)
 SENDERS_WHITELIST=[]
 
