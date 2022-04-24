@@ -4,7 +4,7 @@ A python CLI program that allows you to forward SMS received by your Huawei rout
 **Why ?** <br />
 I always wanted to use my router phone number but going on the router local website to check my SMS is not really convenient, so I needed to find a way to forward SMS that also allows me to filter some of them.
 
-**Credits:** <br />
+**Note:** <br />
 This program uses the [Huawei LTE API](https://github.com/Salamek/huawei-lte-api) created by [Salamek](Salamek).
 
 
