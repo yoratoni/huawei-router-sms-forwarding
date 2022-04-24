@@ -16,7 +16,7 @@ This program uses the [Huawei LTE API](https://github.com/Salamek/huawei-lte-api
 
 
 ## The .env file:
-All the parameters used by this program are stored inside a single .env file.
+All the parameters used by this program are stored inside a single .env file (in the same directory as `app.py`).
 
 **Note:** <br />
 As you see, the account username and password is needed to connect to the router, it is not a big deal because these can only be used by someone connected to your local network, but don't hesitate to check my code to be sure that I never send them anywhere.
