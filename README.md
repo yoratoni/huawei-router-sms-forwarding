@@ -53,6 +53,18 @@ CONTACTS=[]
 LOOP_DELAY=15
 ```
 
+## History:
+Here's an example of a forwarded SMS inside the history.
+
+![](https://github.com/yoratoni/huawei-router-sms-forwarding/blob/main/images/History.png "History example")
+
+**Details**: <br />
+- "40086" corresponds to the SMS ID.
+- "Phone" is the phone number (never impacted by the contacts that you added).
+- "Content" is the SMS content..
+- "Date" corresponds to the date when the SMS has been received, not forwarded.
+- "ContactName": is the contact name that you added to the .env file or "NONE" if not added to the list.
+
 
 ## Compatibility:
 **Note**: Tested only on a B525s-65a but it should work with the routers listed inside the [Huawei API](https://github.com/Salamek/huawei-lte-api#tested-on) doc.
