@@ -18,6 +18,9 @@ This program uses the [Huawei LTE API](https://github.com/Salamek/huawei-lte-api
 ## The .env file:
 All the parameters used by this program are stored inside a single .env file.
 
+**Note:** <br />
+As you see, the account username and password is needed to connect to the router, it is not a big deal because these can only be used by someone connected to your local network, but don't hesitate to check my code to be sure that I never send them anywhere.
+
 ```py
 # Your router IP address (generally 192.168.8.1)
 ROUTER_IP_ADDRESS=192.168.8.1
@@ -35,7 +38,7 @@ USER_PHONE_NUMBER=""
 # Senders whitelist
 # Example: ["+33937023216"] means that only SMS sent by this number are forwarded
 # Leaving the list empty deactivates this option
-# Spaces and uppercase characters have no effect (they are removed during the sender comparison)
+# Spaces and uppercase characters can be used
 SENDERS_WHITELIST=[]
 
 # Allows you to replace phone numbers by contact names inside the forwarded SMS
