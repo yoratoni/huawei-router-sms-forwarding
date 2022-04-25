@@ -18,6 +18,9 @@ This program uses the [Huawei LTE API](https://github.com/Salamek/huawei-lte-api
 ## The .env file:
 All the parameters used by this program are stored inside a single .env file (in the same directory as `app.py`).
 
+This file is created when the program is launched for the first time or if the program don't find the .env file,
+the program will then terminate and ask you to fill the needed info inside of it.
+
 **Note:** <br />
 As you see, the account username and password is needed to connect to the router, it is not a big deal because these can only be used by someone connected to your local network, but don't hesitate to check my code to be sure that I never send them anywhere.
 
@@ -49,6 +52,18 @@ CONTACTS=[]
 # Delay used to check SMS in a loop (in seconds)
 LOOP_DELAY=15
 ```
+
+## History:
+Here's an example of a forwarded SMS inside the history.
+
+![](https://github.com/yoratoni/huawei-router-sms-forwarding/blob/main/images/History.png "History example")
+
+**Details**: <br />
+- "40086" corresponds to the SMS ID (used by the router to identify every SMS).
+- "Phone" is the phone number (not impacted by the contact names).
+- "Content" is simply the content of the SMS
+- "Date" is the date when the SMS has been received, not forwarded.
+- "ContactName" is the contact name that you added to the .env file or "NONE" if not added to the list.
 
 
 ## Compatibility:
