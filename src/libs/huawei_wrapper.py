@@ -4,13 +4,13 @@ from huawei_lte_api.enums.sms import BoxTypeEnum
 from huawei_lte_api.Client import Client
 
 from pyostra import pyprint, LogTypes
-from libs import AppHistory, AppUtils
+from libs import AppHistory
+from datetime import datetime
 from typing import Union
 
 import textwrap
 import time
 import sys
-import os
 
 
 class HuaweiWrapper:
@@ -53,7 +53,7 @@ class HuaweiWrapper:
             
         except Exception as err:
             log_state = LogTypes.CRITICAL
-            log_msg = f"Router connection failed! Please check the .env settings\n{err}"
+            log_msg = f"Router connection failed! Please check the .env settings [{err}]"
 
         # Main log
         pyprint(log_state, log_msg, True)
@@ -238,10 +238,30 @@ class HuaweiWrapper:
                 pyprint(LogTypes.INFO, "No new SMS found..")
                 
         except Exception as err:
-            pyprint(LogTypes.ERROR, f"Last SMS received by the router cannot be returned [{err}]")
+            pyprint(LogTypes.ERROR, f"Last SMS received by the router cannot be returned [{err}]", True)
             sms = None
         
         return sms
+
+
+    @staticmethod
+    def format_date(sms_date: str) -> str:
+        """Used to format the date inside the forwarded SMS.
+
+        Args:
+            sms_date (str): The original string date coming from the SMS dict.
+
+        Returns:
+            str: Formatted date depending on the day.
+        """
+        
+        sms_datetime = datetime.strptime(sms_date, "%Y-%m-%d %H:%M:%S")
+  
+        # Same day -> Only time
+        if sms_datetime.day == datetime.today().day:
+            return sms_datetime.strftime("%H:%M:%S")
+
+        return sms_date
 
 
     @staticmethod
@@ -257,7 +277,7 @@ class HuaweiWrapper:
         """
         
         # Get SMS info    
-        sms_date = AppUtils.format_date(sms["Date"])
+        sms_date = HuaweiWrapper.format_date(sms["Date"])
         sms_sender = sms["Phone"]
         sms_content = sms["Content"]
     
@@ -303,9 +323,9 @@ class HuaweiWrapper:
             error_reason = err
 
         if not gen_state:
-            pyprint(LogTypes.ERROR, f"SMS cannot be sent to {phone_number} [{error_reason}]")
+            pyprint(LogTypes.ERROR, f"SMS cannot be sent to {phone_number} [{error_reason}]", True)
         else:
-            pyprint(LogTypes.SUCCESS, f"SMS correctly forwarded to {phone_number}")
+            pyprint(LogTypes.SUCCESS, f"SMS correctly forwarded to {phone_number}", True)
 
         return gen_state
     

@@ -43,7 +43,7 @@ class AppHistory:
                 sep_sms.pop("Priority")
                 sep_sms.pop("SmsType")
             except KeyError as err:
-                pyprint(LogTypes.ERROR, f"SMS could not be parsed [{err}]")
+                pyprint(LogTypes.ERROR, f"SMS could not be parsed [{err}]", True)
             
             # Add to the history general dict
             AppHistory.HISTORY[sms_id] = sep_sms
@@ -111,6 +111,6 @@ class AppHistory:
                 
                 return True
             except json.JSONDecodeError as err:
-                pyprint(LogTypes.ERROR, f"History file could not be loaded [{err}]")
+                pyprint(LogTypes.ERROR, f"History file could not be loaded [{err}]", True)
 
         return False

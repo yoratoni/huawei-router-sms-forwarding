@@ -1,12 +1,43 @@
 from pyostra import pyprint, LogTypes
-from datetime import date, datetime
 from dotenv import load_dotenv
 
+import textwrap
 import sys
 import os
 
 
-class AppUtils:
+class EnvParsing:
+    DEFAULT_ENV = textwrap.dedent("""\
+    # Your router IP address (generally 192.168.8.1)
+    ROUTER_IP_ADDRESS=192.168.8.1
+
+    # Account details (the same one used to identify yourself on the local Huawei router website)
+    ACCOUNT_USERNAME=""
+    ACCOUNT_PASSWORD=""
+
+    # International phone numbers of the router and the user, example: "+33 5 42 56 48 21"
+    # Spaces are removed when the file is loaded so you can add spaces if you want
+    # User phone number is the number where all the forwarded SMS are going
+    ROUTER_PHONE_NUMBER=""
+    USER_PHONE_NUMBER=""
+
+    # Senders whitelist
+    # Example: ["+33937023216"] means that only SMS sent by this number are forwarded
+    # Leaving the list empty deactivates this option
+    # Spaces and uppercase characters can be used
+    SENDERS_WHITELIST=[]
+
+    # Allows you to replace phone numbers by contact names inside the forwarded SMS
+    # Formatted as a list where a phone number is followed by its contact name
+    # Example: ["+33123456789", "Binance"] -> This number will be replaced by "Binance"
+    CONTACTS=[]
+
+    # Delay used to check SMS in a loop (in seconds)
+    LOOP_DELAY=15
+    """
+    )
+    
+    
     @staticmethod
     def string_list_to_list(raw_input: str) -> list:
         """Converts a string representation of a list
@@ -24,8 +55,8 @@ class AppUtils:
         
         output = []
         
-        if raw_input is not None and len(raw_input) > 0:
-            # Be sure that there's no ending comma
+        if raw_input is not None and len(raw_input) > 0 and raw_input != "[]":
+            # Remove ending comma
             if raw_input[-2] == ",":
                 raw_input = raw_input[:-2] + "]"
             
@@ -55,7 +86,7 @@ class AppUtils:
         """
         
         output = {}
-        contacts_list = AppUtils.string_list_to_list(contacts)
+        contacts_list = EnvParsing.string_list_to_list(contacts)
         
         if contacts_list is not None:
             driver = len(contacts_list)
@@ -68,7 +99,27 @@ class AppUtils:
                         output[contacts_list[i]] = "MISSING_NAME"
         
         return output
-
+    
+    
+    @staticmethod
+    def load_env():
+        """Loads the .env file into the environment variables,
+        with file creation if not found and exception catching.
+        """
+        
+        # Relative path to the file
+        env_path = os.path.join(__file__, os.pardir, os.pardir, ".env")
+        
+        if os.path.exists(env_path):
+            load_dotenv(env_path)
+        else:
+            try:
+                with open(env_path, "w+") as env_file:
+                    env_file.write(EnvParsing.DEFAULT_ENV)
+            except Exception as err:
+                pyprint(LogTypes.CRITICAL, f"The .env file cannot be created [{err}]", True)
+                sys.exit(1)
+                
 
     @staticmethod
     def get_formatted_env() -> dict:
@@ -86,9 +137,8 @@ class AppUtils:
             dict: Parsed dict containing all the .env file variables.
         """
         
-        # Loads the .env file and add as environment variables
-        env_path = os.path.join(os.getcwd(), "src", ".env")
-        load_dotenv(env_path)
+        # Loads the .env file
+        EnvParsing.load_env()
         
         # Get internal env vars
         internal_dict = {
@@ -99,15 +149,14 @@ class AppUtils:
             "USER_PHONE_NUMBER": None,
             "SENDERS_WHITELIST": None,
             "CONTACTS": None,
-            "LOOP_DELAY": None,
-            "DELETE_SYSTEM": None
+            "LOOP_DELAY": None
         }
 
         for key in internal_dict.keys():
             value = os.getenv(key)
             
-            if value is None:
-                pyprint(LogTypes.CRITICAL, f"{key}: Missing input, please verify the .env file.")
+            if value is None or len(value) == 0:
+                pyprint(LogTypes.CRITICAL, f"'{key}': Missing input, please verify the .env file.", True)
                 sys.exit(1)
                 
             internal_dict[key] = value
@@ -129,33 +178,10 @@ class AppUtils:
         # Delay used for the loop
         system_dict["LOOP_DELAY"] = int(internal_dict["LOOP_DELAY"])
         
-        # Number of forwarded SMS before starting to delete the old ones
-        system_dict["DELETE_SYSTEM"] = int(internal_dict["DELETE_SYSTEM"])
-        
         # SMS senders whitelist
-        system_dict["SENDERS_WHITELIST"] = AppUtils.string_list_to_list(internal_dict["SENDERS_WHITELIST"])
+        system_dict["SENDERS_WHITELIST"] = EnvParsing.string_list_to_list(internal_dict["SENDERS_WHITELIST"])
         
         # List of contacts that replaces the raw phone numbers.
-        system_dict["CONTACTS"] = AppUtils.format_contacts(internal_dict["CONTACTS"])
+        system_dict["CONTACTS"] = EnvParsing.format_contacts(internal_dict["CONTACTS"])
 
         return system_dict    
-
-    
-    @staticmethod
-    def format_date(sms_date: str) -> str:
-        """Used to format the date inside the forwarded SMS.
-
-        Args:
-            sms_date (str): The original string date coming from the SMS dict.
-
-        Returns:
-            str: Formatted date depending on the day.
-        """
-        
-        sms_datetime = datetime.strptime(sms_date, "%Y-%m-%d %H:%M:%S")
-  
-        # Same day -> Only time
-        if sms_datetime.day == datetime.today().day:
-            return sms_datetime.strftime("%H:%M:%S")
-
-        return sms_date
