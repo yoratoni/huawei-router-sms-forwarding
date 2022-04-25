@@ -59,11 +59,11 @@ Here's an example of a forwarded SMS inside the history.
 ![](https://github.com/yoratoni/huawei-router-sms-forwarding/blob/main/images/History.png "History example")
 
 **Details**: <br />
-- "40086" corresponds to the SMS ID.
-- "Phone" is the phone number (never impacted by the contacts that you added).
-- "Content" is the SMS content..
-- "Date" corresponds to the date when the SMS has been received, not forwarded.
-- "ContactName": is the contact name that you added to the .env file or "NONE" if not added to the list.
+- "40086" corresponds to the SMS ID (used by the router to identify every SMS).
+- "Phone" is the phone number (not impacted by the contact names).
+- "Content" is simply the content of the SMS
+- "Date" is the date when the SMS has been received, not forwarded.
+- "ContactName" is the contact name that you added to the .env file or "NONE" if not added to the list.
 
 
 ## Compatibility:
