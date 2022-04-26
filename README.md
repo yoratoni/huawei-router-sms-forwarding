@@ -56,7 +56,7 @@ LOOP_DELAY=15
 ## History:
 Here's an example of a forwarded SMS inside the history.
 
-![](https://github.com/yoratoni/huawei-router-sms-forwarding/blob/main/images/History.png "History example")
+![](https://github.com/yoratoni/huawei-router-sms-forwarding/blob/main/doc/History.png "History example")
 
 **Details**: <br />
 - "40086" corresponds to the SMS ID (used by the router to identify every SMS).
