@@ -15,8 +15,9 @@ import sys
 
 class HuaweiWrapper:
     # Used to avoid sending the same SMS multiple times
-    # In the case of a SMS received at the exact same time as a new iteration
-    LAST_SMS_ID = ""
+    # In the case of a SMS received/sended at the exact same time as a new iteration
+    LAST_RECEIVED_SMS_ID = ""
+    LAST_SENDED_SMS_ID = ""
     
     
     @staticmethod
@@ -156,8 +157,8 @@ class HuaweiWrapper:
         if sms is not None and "Index" in sms.keys():
             ID = sms["Index"]
             
-            if ID != HuaweiWrapper.LAST_SMS_ID:
-                HuaweiWrapper.LAST_SMS_ID = ID
+            if ID != HuaweiWrapper.LAST_RECEIVED_SMS_ID:
+                HuaweiWrapper.LAST_RECEIVED_SMS_ID = ID
                 return True
             else:
                 return False
@@ -345,15 +346,16 @@ class HuaweiWrapper:
             bool: _description_
         """
 
-        if sms is not None:
-            # String formatted SMS content
-            sms_content = HuaweiWrapper.format_sms(sms, contacts)
-            
-            # SMS sending request
-            api_response = HuaweiWrapper.send_sms(client, sms_content, phone_number)
-            
-            if api_response:
-                AppHistory.add_to_history(sms, contacts)
-                return True
+        if sms is not None and "Index" in sms:
+            # Avoid duplicata
+            if sms["Index"] != HuaweiWrapper.LAST_SENDED_SMS_ID:
+                sms_content = HuaweiWrapper.format_sms(sms, contacts)
+                api_response = HuaweiWrapper.send_sms(client, sms_content, phone_number)
+                
+                if api_response:
+                    AppHistory.add_to_history(sms, contacts)
+                    return True
+            else:
+                pyprint(LogTypes.WARN, "This SMS seems to have been already sended once")
             
         return False
