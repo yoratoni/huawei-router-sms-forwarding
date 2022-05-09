@@ -2,8 +2,7 @@ from libs import HuaweiWrapper, EnvParsing, AppHistory
 from pyostra import pyprint, LogTypes
 
 import time
-import sys
-import os
+
 
 client = None
 system_dict = EnvParsing.get_formatted_env()

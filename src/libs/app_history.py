@@ -12,7 +12,8 @@ class AppHistory:
     
     @staticmethod
     def add_to_history(sms: dict, contacts: dict) -> dict:
-        """Add a unique SMS (dict formatted) into the history
+        """
+        Add a unique SMS (dict formatted) into the history
         and returns the SMS dict if needed (deep-copied).
 
         Args:
@@ -53,7 +54,8 @@ class AppHistory:
     
     @staticmethod
     def save_history() -> bool:
-        """Saves the history dict into a json file.
+        """
+        Saves the history dict into a json file.
         
         Note:
             Also creates the JSON "history" file if not found.
@@ -85,7 +87,8 @@ class AppHistory:
 
     @staticmethod
     def load_history() -> bool:
-        """Loads the history from the json file
+        """
+        Loads the history from the json file
         into the AppHistory.HISTORY var (as a dict with SMS IDs).
         
         Note:

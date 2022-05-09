@@ -6,7 +6,7 @@ from huawei_lte_api.Client import Client
 from pyostra import pyprint, LogTypes
 from libs import AppHistory
 from datetime import datetime
-from typing import Union
+from typing import Union, Optional
 
 import textwrap
 import time
@@ -21,14 +21,15 @@ class HuaweiWrapper:
     
     
     @staticmethod
-    def connect_to_api(uri: str) -> Union[Client, None]:
-        """Connect to the API and returns the client object (with full exception handling).
+    def connect_to_api(uri: str) -> Optional[Client]:
+        """
+        Connect to the API and returns the client object (with full exception handling).
 
         Args:
             uri (str): URI generated from HuaweiWrapper.get_formatted_env() ("URI" key).
 
         Returns:
-            Union[Client, None]: The client object used to interact with the API
+            Optional[Client]: The client object used to interact with the API
                 or None if it can't connect to the API.
         """
         
@@ -67,11 +68,12 @@ class HuaweiWrapper:
     
     
     @staticmethod
-    def api_connection_loop(client: Union[Client, None], uri: str) -> Client:
-        """Try to connect to the API using a loop and a time sleeping system.
+    def api_connection_loop(client: Optional[Client], uri: str) -> Client:
+        """
+        Try to connect to the API using a loop and a time sleeping system.
 
         Args:
-            client (Union[Client, None]): To test if the client is already connected.
+            client (Optional[Client]): To test if the client is already connected.
             uri (str): URI generated from HuaweiWrapper.get_formatted_env() ("URI" key).
 
         Returns:
@@ -120,11 +122,12 @@ class HuaweiWrapper:
         
 
     @staticmethod
-    def disconnect(client: Union[Client, None]):
-        """Try-except disconnection from the Huawei Router.
+    def disconnect(client: Optional[Client]):
+        """
+        Try-except disconnection from the Huawei Router.
 
         Args:
-            client (Union[Client, None]): To test if the client is already connected.
+            client (Optional[Client]): To test if the client is already connected.
         """
         
         try:
@@ -141,7 +144,8 @@ class HuaweiWrapper:
 
     @staticmethod
     def unique_sms_id_check(sms: dict) -> bool:
-        """Used to avoid sending the same SMS multiple times
+        """
+        Used to avoid sending the same SMS multiple times
         in the case of a SMS received at the exact same time as a new iteration.
 
         Note:
@@ -166,7 +170,8 @@ class HuaweiWrapper:
 
     @staticmethod
     def is_sms_whitelisted(sms_sender: str, senders_whitelist: list[str]) -> bool:
-        """Returns True if the SMS is sent by one of the senders
+        """
+        Returns True if the SMS is sent by one of the senders
         listed inside the .env file ("SENDERS_WHITELIST" list).
         
         Note:
@@ -194,8 +199,13 @@ class HuaweiWrapper:
         
 
     @staticmethod
-    def get_last_sms(client: Client, senders_whitelist: list[str], ignore_read: bool = True) -> Union[dict, None]:
-        """Returns the last sms received by the router,
+    def get_last_sms(
+        client: Client,
+        senders_whitelist: list[str],
+        ignore_read: bool = True
+    ) -> Optional[dict]:
+        """
+        Returns the last sms received by the router,
         including senders whitelist and unread priority.
 
         Args:
@@ -204,7 +214,7 @@ class HuaweiWrapper:
             ignore_read (bool, optional): If True, ignores already read SMS.
 
         Returns:
-            Union[dict, None]: A dict containing all the SMS info,
+            Optional[dict]: A dict containing all the SMS info,
                 None if no SMS found or if the SMS is already read and "ignore_read" is set to True.
         """
         
@@ -247,7 +257,8 @@ class HuaweiWrapper:
 
     @staticmethod
     def format_date(sms_date: str) -> str:
-        """Used to format the date inside the forwarded SMS.
+        """
+        Used to format the date inside the forwarded SMS.
 
         Args:
             sms_date (str): The original string date coming from the SMS dict.
@@ -267,7 +278,8 @@ class HuaweiWrapper:
 
     @staticmethod
     def format_sms(sms: dict, contacts: dict) -> str:
-        """Use the SMS dict info to format a messages used for the forwarding.
+        """
+        Use the SMS dict info to format a messages used for the forwarding.
 
         Args:
             sms (dict): Original SMS dict.
@@ -286,15 +298,13 @@ class HuaweiWrapper:
         if sms_sender in contacts.keys():
             sms_sender = contacts[sms_sender]
     
-        # Formatted string
-        formatted_sms = f"[{sms_date}] New SMS from {sms_sender}:\n\n{sms_content}"
-        
-        return formatted_sms
+        return f"[{sms_date}] New SMS from {sms_sender}:\n\n{sms_content}"
 
 
     @staticmethod
     def send_sms(client: Client, sms_content: str, phone_number: str) -> bool:
-        """Allows to send an SMS to a number (international formatted such as "+33937023216").
+        """
+        Allows to send an SMS to a number (international formatted such as "+33937023216").
 
         Args:
             client (Client): Returned from HuaweiWrapper.api_connection_loop().
@@ -333,7 +343,8 @@ class HuaweiWrapper:
 
     @staticmethod
     def forward_sms(client: Client, sms: dict, contacts: dict, phone_number: str) -> bool:
-        """Allows to forward a formatted SMS to another phone number,
+        """
+        Allows to forward a formatted SMS to another phone number,
         includes contacts & history systems.
 
         Args:

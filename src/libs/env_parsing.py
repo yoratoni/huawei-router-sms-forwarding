@@ -40,7 +40,8 @@ class EnvParsing:
     
     @staticmethod
     def string_list_to_list(raw_input: str) -> list:
-        """Converts a string representation of a list
+        """
+        Converts a string representation of a list
         coming from an .env file to a real Python list.
         
         Note:
@@ -75,7 +76,8 @@ class EnvParsing:
     
     @staticmethod
     def format_contacts(contacts: str) -> dict:
-        """Used to convert the contacts string represented list to a formatted dict,
+        """
+        Used to convert the contacts string represented list to a formatted dict,
         it uses string_list_to_list() then it formats it into a dict.
         
         Args:
@@ -103,7 +105,8 @@ class EnvParsing:
     
     @staticmethod
     def load_env():
-        """Loads the .env file into the environment variables,
+        """
+        Loads the .env file into the environment variables,
         with file creation if not found and exception catching.
         """
         
@@ -123,7 +126,8 @@ class EnvParsing:
 
     @staticmethod
     def get_formatted_env() -> dict:
-        """Returns a dict containing the parsed .env file
+        """
+        Returns a dict containing the parsed .env file
         with all the data used by the app.
 
         Keys:
