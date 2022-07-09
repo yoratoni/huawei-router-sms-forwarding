@@ -80,7 +80,7 @@ class EnvParsing:
         Used to convert the contacts string represented list to a formatted dict,
         it uses string_list_to_list() then it formats it into a dict.
         
-        Args:
+        Args:   
             contacts (str): Original string represented list of contacts.
 
         Returns:
