@@ -21,37 +21,13 @@ All the parameters used by this program are stored inside a single .env file (in
 This file is created when the program is launched for the first time or if the program don't find the .env file,
 the program will then terminate and ask you to fill the needed info inside of it.
 
+You can find an example for the .env file inside `.env.sample`.
+
 **Note:** <br />
-As you see, the account username and password is needed to connect to the router, it is not a big deal because these can only be used by someone connected to your local network, but don't hesitate to check my code to be sure that I never send them anywhere.
+As you see, the account username and password is needed to connect to the router, it is not a big deal because these can
+only be used by someone connected to your local network, but don't hesitate to check my code to be sure that
+never send them anywhere.
 
-```py
-# Your router IP address (generally 192.168.8.1)
-ROUTER_IP_ADDRESS=192.168.8.1
-
-# Account details (the same one used to identify yourself on the local Huawei router website)
-ACCOUNT_USERNAME=""
-ACCOUNT_PASSWORD=""
-
-# International phone numbers of the router and the user, example: "+33 5 42 56 48 21"
-# Spaces are removed when the file is loaded so you can add spaces if you want
-# User phone number is the number where all the forwarded SMS are going
-ROUTER_PHONE_NUMBER=""
-USER_PHONE_NUMBER=""
-
-# Senders whitelist
-# Example: ["+33937023216"] means that only SMS sent by this number are forwarded
-# Leaving the list empty deactivates this option
-# Spaces and uppercase characters can be used
-SENDERS_WHITELIST=[]
-
-# Allows you to replace phone numbers by contact names inside the forwarded SMS
-# Formatted as a list where a phone number is followed by its contact name
-# Example: ["+33123456789", "Binance"] -> This number will be replaced by "Binance"
-CONTACTS=[]
-
-# Delay used to check SMS in a loop (in seconds)
-LOOP_DELAY=15
-```
 
 ## History:
 Here's an example of a forwarded SMS inside the history.
@@ -82,13 +58,13 @@ Here's an example of a forwarded SMS inside the history.
 * Huawei E5186s-22a
 * Huawei E5576-320
 * Huawei E5577Cs-321
- 
+* SoyeaLink B535-333
+
 #### 3G/LTE USB sticks:
 (Device must support NETWork mode aka. "HiLink" version, it wont work with serial mode)
 * Huawei E3131
 * Huawei E3372
 * Huawei E3531
-
 
 #### 5G Routers:
 * Huawei 5G CPE Pro 2 (H122-373)

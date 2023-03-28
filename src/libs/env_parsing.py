@@ -1,5 +1,7 @@
-from pyostra import pyprint, LogTypes
+from libs.logger import pyprint, LogTypes
 from dotenv import load_dotenv
+from typing import Optional
+
 
 import textwrap
 import sys
@@ -32,18 +34,18 @@ class EnvParsing:
     # Example: ["+33123456789", "Binance"] -> This number will be replaced by "Binance"
     CONTACTS=[]
 
-    # Delay used to check SMS in a loop (in seconds)
-    LOOP_DELAY=15
+    # Delay used to check SMS (in seconds)
+    LOOP_DELAY=4
     """
     )
-    
-    
+
+
     @staticmethod
-    def string_list_to_list(raw_input: str) -> list:
+    def string_list_to_list(raw_input: Optional[str]) -> list[str]:
         """
         Converts a string representation of a list
         coming from an .env file to a real Python list.
-        
+
         Note:
             If the string representation of the list is invalid, returns an empty list.
 
@@ -53,66 +55,67 @@ class EnvParsing:
         Returns:
             list: A python list.
         """
-        
+
         output = []
-        
+
         if raw_input is not None and len(raw_input) > 0 and raw_input != "[]":
             # Remove ending comma
             if raw_input[-2] == ",":
                 raw_input = raw_input[:-2] + "]"
-            
+
             if "[" in raw_input and "]" in raw_input:
                 output = raw_input.strip("][").split(", ")
-                
+
             for i, elem in enumerate(output):
                 single = (elem[0] == "'" and elem[-1] == "'")
                 double = (elem[0] == '"' and elem[-1] == '"')
-                
+
                 if single or double:
                     output[i] = elem[1:-1]
 
         return output
-    
-    
+
+
     @staticmethod
-    def format_contacts(contacts: str) -> dict:
+    def format_contacts(contacts: str) -> dict[str, str]:
         """
         Used to convert the contacts string represented list to a formatted dict,
         it uses string_list_to_list() then it formats it into a dict.
-        
-        Args:   
+
+        Args:
             contacts (str): Original string represented list of contacts.
 
         Returns:
             dict: Formatted dict of contacts.
         """
-        
-        output = {}
+
+        output: dict[str, str] = {}
         contacts_list = EnvParsing.string_list_to_list(contacts)
-        
-        if contacts_list is not None:
-            driver = len(contacts_list)
-        
-            if driver > 0:
-                for i in range(0, driver, 2):
-                    if i + 1 < driver:
-                        output[contacts_list[i]] = contacts_list[i+1]
-                    else:
-                        output[contacts_list[i]] = "MISSING_NAME"
-        
+        driver = len(contacts_list)
+
+        if driver > 0:
+            for i in range(0, driver, 2):
+                # Removes spaces from the phone number
+                key = contacts_list[i].replace(' ', '')
+
+                if i + 1 < driver:
+                    output[key] = contacts_list[i+1]
+                else:
+                    output[key] = "MISSING_NAME"
+
         return output
-    
-    
+
+
     @staticmethod
     def load_env():
         """
         Loads the .env file into the environment variables,
         with file creation if not found and exception catching.
         """
-        
-        # Relative path to the file
-        env_path = os.path.join(__file__, os.pardir, os.pardir, ".env")
-        
+
+        # Path to the .env file (app.py main file to get the path)
+        env_path = os.path.join(os.path.dirname(sys.argv[0]), ".env")
+
         if os.path.exists(env_path):
             load_dotenv(env_path)
         else:
@@ -122,10 +125,10 @@ class EnvParsing:
             except Exception as err:
                 pyprint(LogTypes.CRITICAL, f"The .env file cannot be created [{err}]", True)
                 sys.exit(1)
-                
+
 
     @staticmethod
-    def get_formatted_env() -> dict:
+    def get_formatted_env() -> dict[str, str | int | list[str]]:
         """
         Returns a dict containing the parsed .env file
         with all the data used by the app.
@@ -136,14 +139,14 @@ class EnvParsing:
             - USER_PHONE_NUMBER: International number of the user (used for SMS forwarding).
             - LOOP_DELAY: Time in seconds between two iterations of the main infinite loop.
             - SENDERS_WHITELIST: Whitelist containing available senders for forwarding.
-            
+
         Returns:
             dict: Parsed dict containing all the .env file variables.
         """
-        
+
         # Loads the .env file
         EnvParsing.load_env()
-        
+
         # Get internal env vars
         internal_dict = {
             "ROUTER_IP_ADDRESS": None,
@@ -158,34 +161,34 @@ class EnvParsing:
 
         for key in internal_dict.keys():
             value = os.getenv(key)
-            
+
             if value is None or len(value) == 0:
                 pyprint(LogTypes.CRITICAL, f"'{key}': Missing input, please verify the .env file.", True)
                 sys.exit(1)
-                
-            internal_dict[key] = value
-            
+
+            internal_dict[key] = value # type: ignore
+
         # Dict containing formatted outputs used for the Huawei API
-        system_dict = {}
-        
+        system_dict: dict[str, str | int | list[str]] = {}
+
         # Formatted connection URI
         system_dict["URI"] = "http://{0}:{1}@{2}".format(
             internal_dict["ACCOUNT_USERNAME"],
             internal_dict["ACCOUNT_PASSWORD"],
             internal_dict["ROUTER_IP_ADDRESS"]
         )
-        
+
         # Phone numbers
-        system_dict["ROUTER_PHONE_NUMBER"] = internal_dict["ROUTER_PHONE_NUMBER"].replace(" ", "")
-        system_dict["USER_PHONE_NUMBER"] = internal_dict["USER_PHONE_NUMBER"].replace(" ", "")
-        
+        system_dict["ROUTER_PHONE_NUMBER"] = internal_dict["ROUTER_PHONE_NUMBER"].replace(" ", "") # type: ignore
+        system_dict["USER_PHONE_NUMBER"] = internal_dict["USER_PHONE_NUMBER"].replace(" ", "") # type: ignore
+
         # Delay used for the loop
-        system_dict["LOOP_DELAY"] = int(internal_dict["LOOP_DELAY"])
-        
+        system_dict["LOOP_DELAY"] = int(internal_dict["LOOP_DELAY"]) # type: ignore
+
         # SMS senders whitelist
         system_dict["SENDERS_WHITELIST"] = EnvParsing.string_list_to_list(internal_dict["SENDERS_WHITELIST"])
-        
-        # List of contacts that replaces the raw phone numbers.
-        system_dict["CONTACTS"] = EnvParsing.format_contacts(internal_dict["CONTACTS"])
 
-        return system_dict    
+        # List of contacts that replaces the raw phone numbers.
+        system_dict["CONTACTS"] = EnvParsing.format_contacts(internal_dict["CONTACTS"] ) # type: ignore
+
+        return system_dict
