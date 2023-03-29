@@ -1,6 +1,6 @@
 from libs.logger import pyprint, LogTypes
 from dotenv import load_dotenv
-from typing import Optional
+from typing import Optional, Union
 
 
 import textwrap
@@ -128,7 +128,7 @@ class EnvParsing:
 
 
     @staticmethod
-    def get_formatted_env() -> dict[str, str | int | list[str]]:
+    def get_formatted_env() -> dict[str, Union[str, int, list[str]]]:
         """
         Returns a dict containing the parsed .env file
         with all the data used by the app.
@@ -169,7 +169,7 @@ class EnvParsing:
             internal_dict[key] = value # type: ignore
 
         # Dict containing formatted outputs used for the Huawei API
-        system_dict: dict[str, str | int | list[str]] = {}
+        system_dict: dict[str, Union[str, int, list[str]]] = {}
 
         # Formatted connection URI
         system_dict["URI"] = "http://{0}:{1}@{2}".format(
