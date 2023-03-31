@@ -1,5 +1,5 @@
 # Huawei SMS forwarding
-A python CLI program that I made a long time ago and recently updated, that allows you to work
+A Python CLI program that I made a long time ago and recently updated, that allows you to work
 with SMS received on a 4G Huawei router.
 
 **Why ?** <br />
