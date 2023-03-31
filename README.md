@@ -7,7 +7,7 @@ As a 4G router takes a SIM card, it have a phone number and then, can be used to
 The problem with that is that you need to access your Huawei router interface on the internet.
 
 **Credits:** <br />
-This program uses the [Huawei LTE API](https://github.com/Salamek/huawei-lte-api) created by [Salamek](Salamek).
+This program uses the [Huawei LTE API](https://github.com/Salamek/huawei-lte-api) created by [Salamek](https://github.com/Salamek).
 
 
 Features:
