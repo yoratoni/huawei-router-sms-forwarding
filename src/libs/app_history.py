@@ -8,18 +8,18 @@ import os
 
 
 class AppHistory:
-    HISTORY_PATH = os.path.join(os.path.dirname(sys.argv[0]), "history.json")
+    HISTORY_PATH = os.path.join(os.path.dirname(sys.argv[0]), "logs/history.json")
     history: dict[str, dict[str, str]] = {}
 
 
     @staticmethod
-    def add_to_history(sms: Optional[dict[str, str]], contacts: dict[str, str]) -> None:
+    def add_to_history(sms: Optional[dict[str, str]]) -> None:
         """
         Add a unique SMS (dict formatted) into the history
         and returns the SMS dict if needed (deep-copied).
 
         Args:
-            sms (dict): Original unique SMS dict.
+            sms (dict, optional): Original unique SMS dict.
         """
 
         # Ensure that it does not modify the original SMS dict
@@ -28,15 +28,12 @@ class AppHistory:
         # General validity
         if sep_sms is not None and "Index" in sep_sms:
             sms_id = sep_sms["Index"]
-            sms_sender = sep_sms["Phone"]
 
             # Parsing the dict to remove useless info
             try:
                 # Add the contact name
-                if sms_sender in contacts.keys():
-                    sep_sms["ContactName"] = contacts[sms_sender]
-                else:
-                    sep_sms["ContactName"] = "NONE"
+                if "Contact" in sep_sms:
+                    sep_sms["Contact"] = sep_sms["Contact"]
 
                 # Useless info for the history
                 sep_sms.pop("Smstat")

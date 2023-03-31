@@ -4,6 +4,9 @@ history.json
 # IDE
 .vscode
 
+# Config
+**/config.dev.yaml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

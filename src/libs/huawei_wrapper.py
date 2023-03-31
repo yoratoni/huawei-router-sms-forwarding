@@ -4,6 +4,7 @@ from huawei_lte_api.enums.sms import BoxTypeEnum, SortTypeEnum
 from huawei_lte_api.Client import Client
 
 from libs.logger import pyprint, LogTypes
+from libs.config_parser import ConfigParser
 from libs.app_history import AppHistory
 from datetime import datetime
 from typing import Optional
@@ -26,7 +27,7 @@ class HuaweiWrapper:
         Connect to the API and returns the client object (with full exception handling).
 
         Args:
-            uri (str): URI generated from HuaweiWrapper.get_formatted_env() ("URI" key).
+            uri (str): URI generated from ConfigParser.get_config() ("ROUTER_URI" key).
 
         Returns:
             Optional[Client]: The client object used to interact with the API
@@ -55,7 +56,7 @@ class HuaweiWrapper:
 
         except Exception as err:
             log_state = LogTypes.CRITICAL
-            log_msg = f"Router connection failed! Please check the .env settings [{err}]"
+            log_msg = f"Router connection failed! Please check the config settings [{err}]"
 
         # Main log
         pyprint(log_state, log_msg, True)
@@ -73,11 +74,11 @@ class HuaweiWrapper:
         Try to connect to the API using a loop and a time sleeping system.
 
         Args:
-            client (Client, optional): To test if the client is already connected.
-            uri (str): URI generated from HuaweiWrapper.get_formatted_env() ("URI" key).
+            client (Client, optional): Recursively assign the client var and check if connected.
+            uri (str): URI generated from ConfigParser.get_config() ("ROUTER_URI" key).
 
         Returns:
-            Client: The updated client.
+            Client: The connected client.
         """
 
         # Infinite loop limit
@@ -93,7 +94,7 @@ class HuaweiWrapper:
                 Could not connect to the router after {iteration} attempts.
 
                 Debugging:
-                - Verify the settings inside the .env file and if your Huawei router is online.
+                - Verify the settings inside the YAML config file and if your Huawei router is online.
                 - Verify that your router is compatible, here's the list of compatible models:
                     Huawei B310s-22
                     Huawei B315s-22
@@ -135,6 +136,7 @@ class HuaweiWrapper:
             if client is not None:
                 client.user.logout()
                 AppHistory.save_history()
+                print("\n")
                 pyprint(LogTypes.INFO, "Successfully disconnected from the router")
         except Exception:
             pass
@@ -164,56 +166,54 @@ class HuaweiWrapper:
             if ID != HuaweiWrapper.last_received_sms_id:
                 HuaweiWrapper.last_received_sms_id = ID
                 return True
-            else:
-                return False
 
         return False
 
 
     @staticmethod
-    def is_sms_whitelisted(sms_sender: str, senders_whitelist: Optional[list[str]]) -> bool:
+    def is_sms_whitelisted(sender: str, whitelist: list[str]) -> bool:
         """
-        Returns True if the SMS is sent by one of the senders
-        listed inside the .env file ("SENDERS_WHITELIST" list).
+        Returns True if the SMS is sent by one of the senders is inside the whitelist.
 
         Note:
-            If the whitelist system is deactivated, it returns True.
+            If the whitelist system is deactivated (empty list), it always returns True.
 
         Args:
-            sms_sender (str): The SMS sender (unique SMS dict -> "Phone" key).
-            senders_whitelist (list[str], optional): Coming from the formatted env dict ("SENDERS_WHITELIST" key).
+            sender (str): The SMS sender.
+            whitelist (list[str]): The list of whitelisted senders.
 
         Returns:
-            bool: True if the SMS is sent by one of the senders listed.
+            bool: True if the SMS is sent by one of the whitelisted senders.
         """
 
-        if senders_whitelist is not None and len(senders_whitelist) > 0:
-            # Formatted using replace() & lower() to match senders
-            sms_sender = sms_sender.replace(" ", "").lower()
-
-            for included_sender in senders_whitelist:
-                if sms_sender == included_sender.replace(" ", "").lower():
+        if len(whitelist) > 0:
+            for included_sender in whitelist:
+                if sender == included_sender:
                     return True
 
             return False
-        else:
-            return True
+
+        return True
 
 
     @staticmethod
     def get_last_sms(
         client: Client,
-        senders_whitelist: list[str],
-        ignore_read: bool = True
+        contacts: dict[str, str],
+        ignore_read: bool = True,
+        dont_set_to_read: bool = False
     ) -> Optional[dict[str, str]]:
         """
-        Returns the last sms received by the router,
-        including senders whitelist and unread priority.
+        Returns the last sms received by the router with unread priority.
+
+        Note:
+            Also adds a "Contact" field to the SMS dict if the sender is inside the contacts dict.
 
         Args:
-            client (Client): _description_
-            senders_whitelist (list[str]): List of all the whitelisted SMS senders.
+            client (Client): The API client.
+            contacts (dict[str, str]): The contacts dict.
             ignore_read (bool): If True, ignores already read SMS.
+            dont_set_to_read (bool): If True, doesn't set the SMS to read (defaults to False).
 
         Returns:
             Optional[dict[str, str]]: A dict containing all the SMS info,
@@ -240,6 +240,7 @@ class HuaweiWrapper:
                 # Get the last SMS
                 raw_last_sms = raw_sms_list["Messages"]["Message"][0]
 
+                # Get the read state & the SMS dict
                 sms_read_state = int(raw_last_sms["Smstat"])
                 sms = raw_last_sms
 
@@ -255,21 +256,25 @@ class HuaweiWrapper:
                 sms_date = sms["Date"]
                 sms_sender = sms["Phone"]
 
-                # Whitelist system (If the whitelist is deactivated, all new SMS are whitelisted)
-                is_whitelisted = HuaweiWrapper.is_sms_whitelisted(sms_sender, senders_whitelist)
-
-                if is_whitelisted:
-                    # Set the SMS status to read
+                # Set the SMS status to read
+                if not dont_set_to_read:
                     client.sms.set_read(int(sms["Index"]))
 
-                    # Main Log
-                    pyprint(LogTypes.DATA, f"({sms_date}) New SMS received from {sms_sender}")
+                # Main Log
+                pyprint(LogTypes.DATA, f"({sms_date}) New SMS received from {sms_sender}")
             else:
                 pyprint(LogTypes.INFO, "No new SMS found..")
 
         except Exception as err:
             pyprint(LogTypes.ERROR, f"Last SMS received by the router cannot be returned [{err}]", True)
             return None
+
+        # If the sender is inside the contacts dict, add a "Contact" field to the SMS dict
+        if sms is not None:
+            formatted_phone_number = ConfigParser.format_phone_number(sms["Phone"])
+
+            if formatted_phone_number in contacts.keys():
+                sms["Contact"] = contacts[formatted_phone_number]
 
         return sms
 
@@ -296,13 +301,12 @@ class HuaweiWrapper:
 
 
     @staticmethod
-    def format_sms(sms: dict[str, str], contacts: dict[str, str]) -> str:
+    def format_sms(sms: dict[str, str]) -> str:
         """
         Use the SMS dict info to format a messages used for the forwarding.
 
         Args:
             sms (dict[str, str]): Original SMS dict.
-            contacts (dict[str, str]): Dict of available contacts that replaces the raw phone numbers.
 
         Returns:
             str: Formatted string of the message.
@@ -310,14 +314,14 @@ class HuaweiWrapper:
 
         # Get SMS info
         sms_date = HuaweiWrapper.format_date(sms["Date"])
-        sms_sender: str = sms["Phone"]
         sms_content = sms["Content"]
 
-        # Ensure that the sender & the contacts are formatted the same way while checking for a contact name
-        if sms_sender.replace(" ", "") in contacts.keys():
-            sms_sender = contacts[sms_sender]
+        if "Contact" in sms.keys():
+            sms_sender = sms["Contact"]
+        else:
+            sms_sender = sms["Phone"]
 
-        return f"[{sms_date}] New SMS from {sms_sender}:\n\n{sms_content}"
+        return f"[{sms_date}] New SMS from '{sms_sender}':\n\n{sms_content}"
 
 
     @staticmethod
@@ -361,30 +365,47 @@ class HuaweiWrapper:
 
 
     @staticmethod
-    def forward_sms(client: Client, sms: Optional[dict[str, str]], contacts: dict[str, str], phone_number: str) -> bool:
+    def forward_sms(
+        client: Client,
+        sms: Optional[dict[str, str]],
+        forwarders: dict[str, list[str]]
+    ) -> bool:
         """
-        Allows to forward a formatted SMS to another phone number,
+        Allows to forward a formatted SMS to multiple phone numbers,
         includes contacts & history systems.
 
         Args:
             client (Client): Returned from HuaweiWrapper.api_connection_loop().
             sms (Optional[dict[str, str]]): Original SMS dictionary.
-            contacts (dict[str, str]): List of contacts that replaces the raw phone numbers (inside the .env file).
-            phone_number (str): String formatted phone number (example: "+33937023216").
+            forwarders (dict[str, list[str]]): Dict of phone numbers to forward the SMS to.
 
         Returns:
-            bool: _description_
+            bool: If the message has successfully been forwarded.
         """
 
         if sms is not None and "Index" in sms:
+            api_res = True
+
             # Avoid duplicata
             if sms["Index"] != HuaweiWrapper.last_sent_sms_id:
-                sms_content = HuaweiWrapper.format_sms(sms, contacts)
-                api_response = HuaweiWrapper.send_sms(client, sms_content, phone_number)
+                sms_content = HuaweiWrapper.format_sms(sms)
 
-                if api_response:
-                    AppHistory.add_to_history(sms, contacts)
-                    return True
+                # Forwarding to every listed number
+                for forwarder in forwarders.keys():
+                    is_whitelisted = HuaweiWrapper.is_sms_whitelisted(sms["Phone"], forwarders[forwarder]) # type: ignore
+
+                    # Check if the number is whitelisted
+                    if is_whitelisted:
+                        api_response = HuaweiWrapper.send_sms(client, sms_content, forwarder)
+
+                        if not api_response:
+                            api_res = False
+                        else:
+                            AppHistory.add_to_history(sms)
+                    else:
+                        pyprint(LogTypes.WARN, f"SMS from {sms['Phone']} has been ignored (not whitelisted)")
+
+                return api_res
             else:
                 pyprint(LogTypes.WARN, "This SMS seems to have been already sent once")
 

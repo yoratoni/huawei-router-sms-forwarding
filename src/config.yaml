@@ -1,0 +1,47 @@
+# =================================================================================
+#
+# The password is not defined inside a .env file which is not the best practice but
+# as it is a local network, I preferred to do it that way.
+#
+# Note that phone numbers should be formatted as international, spaces can be used:
+# +33 5 42 56 48 21 || +33542564821
+#
+# =================================================================================
+
+
+# The parameters of the router that you're using.
+router:
+  # Router IP address (generally 192.168.8.1)
+  ip_address: "192.168.8.1"
+
+  # The phone number of the router.
+  phone_number: ""
+
+  # Account details (the same one used to identify yourself on the local Huawei router website).
+  username: "admin"
+  password: ""
+
+  # Delay between iteration of the loop, checks if a SMS has been received (in seconds).
+  loop: 4
+
+
+# (For the forwarders only) Allows to link a phone number to a contact name.
+contacts:
+  - phone_number: ""
+    name: ""
+
+
+# A forwarder allows the SMS received by the router to be sent to a phone number.
+# A whitelist of international phone numbers can be added, if empty, the whitelist is disabled.
+forwarders:
+  - phone_number: ""
+    whitelist: []
+
+
+# A replier allows to reply something to a phone number in the case of a received filter message.
+# The filter should be the first words to appear inside the message that you want to reply to.
+repliers:
+  - phone_number: ""
+    messages:
+      - filter: ""
+        reply: ""
