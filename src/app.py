@@ -3,7 +3,7 @@ from libs.logger import pyprint, LogTypes
 
 import time
 
-#
+
 client = None
 config = ConfigParser.get_config()
 AppHistory.load_history()

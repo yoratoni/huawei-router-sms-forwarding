@@ -6,11 +6,12 @@ with SMS received on a 4G Huawei router.
 As a 4G router takes a SIM card, it have a phone number and then, can be used to send SMS.
 The problem with that is that you need to access your Huawei router interface on the internet.
 
-**Credit:** <br />
+**Credits:** <br />
 This program uses the [Huawei LTE API](https://github.com/Salamek/huawei-lte-api) created by [Salamek](Salamek).
 
 
-## Features:
+Features:
+---------
 These features are configurable from the `config.yaml` file at the root of the project (`/src`).
 
 - **Contacts**: Allows you to link a name to a phone number, easier to identify each forwarded number.
@@ -21,7 +22,21 @@ These features are configurable from the `config.yaml` file at the root of the p
   I added this feature for someone who needed it to send an automatic message to his internet provider.
 
 
-## History:
+Config:
+-------
+The configuration is defined inside a YAML file, I decided to use that instead of the original `.env` file because it's a lot more user-friendly, even if putting a password inside of it is not the best practice, as the network is local,
+the risk is minimal, I could add an .env file only for the password later if necessary.
+
+If you really don't want to put your password inside the config file, you can create a `config.dev.yaml` and set the 
+`get_config()` first parameter to true.
+
+```py
+config = ConfigParser.get_config(True)
+```
+
+
+History:
+--------
 Here's an example of a forwarded SMS inside the history, the history can be found inside `/logs/history.json`.
 
 ![](https://raw.githubusercontent.com/yoratoni/huawei-router-sms-forwarding/1e445925ef691eb0ec1bd2283fb7a959093d13cf/doc/History.png "History example")
@@ -34,7 +49,8 @@ Here's an example of a forwarded SMS inside the history, the history can be foun
 - "Contact" is the contact name that you optionally added to the "contacts" field inside the YAML file.
 
 
-## Compatibility:
+Compatibility:
+--------------
 **Note**: Tested only on a B525s-65a but it should work with the routers listed inside the [Huawei API](https://github.com/Salamek/huawei-lte-api#tested-on) doc.
 
 #### 3G/LTE Routers:
