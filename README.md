@@ -1,36 +1,28 @@
 # Huawei SMS forwarding
-A python CLI program that allows you to forward SMS received by your Huawei router to a phone number.
+A python CLI program that I made a long time ago and recently updated, that allows you to work
+with SMS received on a 4G Huawei router.
 
 **Why ?** <br />
-I always wanted to use my router phone number but going on the router local website to check my SMS is not really convenient, so I needed to find a way to forward SMS that also allows me to filter some of them.
+As a 4G router takes a SIM card, it have a phone number and then, can be used to send SMS.
+The problem with that is that you need to access your Huawei router interface on the internet.
 
-**Note:** <br />
+**Credit:** <br />
 This program uses the [Huawei LTE API](https://github.com/Salamek/huawei-lte-api) created by [Salamek](Salamek).
 
 
 ## Features:
-- **Forwarded SMS format**: Forwarded SMS contains the date and the sender's phone number/contact.
-- **Contacts**: To replace raw phone numbers by contact names inside the forwarded SMS.
-- **Whitelist**: Only SMS received by phone numbers in this list are forwarded.
-- **History**: A JSON file that contains all the forwarded SMS with their date and their content.
+These features are configurable from the `config.yaml` file at the root of the project (`/src`).
 
-
-## The .env file:
-All the parameters used by this program are stored inside a single .env file (in the same directory as `app.py`).
-
-This file is created when the program is launched for the first time or if the program don't find the .env file,
-the program will then terminate and ask you to fill the needed info inside of it.
-
-You can find an example for the .env file inside `.env.sample`.
-
-**Note:** <br />
-As you see, the account username and password is needed to connect to the router, it is not a big deal because these can
-only be used by someone connected to your local network, but don't hesitate to check my code to be sure that
-never send them anywhere.
+- **Contacts**: Allows you to link a name to a phone number, easier to identify each forwarded number.
+- **Forwarders**: The SMS received by the router are forwarded to these numbers, a whitelist can be added
+  to redirect only some numbers.
+- **Repliers**: An auto-reply system, if a message is received from a specific number, and this message contains a string,
+  like, if it starts with an "Hi!" (or "Hi!" at any place inside of the message), it replies something.
+  I added this feature for someone who needed it to send an automatic message to his internet provider.
 
 
 ## History:
-Here's an example of a forwarded SMS inside the history.
+Here's an example of a forwarded SMS inside the history, the history can be found inside `/logs/history.json`.
 
 ![](https://github.com/yoratoni/huawei-router-sms-forwarding/blob/main/doc/History.png "History example")
 
@@ -39,7 +31,7 @@ Here's an example of a forwarded SMS inside the history.
 - "Phone" is the phone number (not impacted by the contact names).
 - "Content" is simply the content of the SMS
 - "Date" is the date when the SMS has been received, not forwarded.
-- "ContactName" is the contact name that you added to the .env file or "NONE" if not added to the list.
+- "Contact" is the contact name that you optionally added to the "contacts" field inside the YAML file.
 
 
 ## Compatibility:
