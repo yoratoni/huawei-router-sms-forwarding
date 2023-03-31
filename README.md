@@ -27,8 +27,7 @@ Config:
 The configuration is defined inside a YAML file, I decided to use that instead of the original `.env` file because it's a lot more user-friendly, even if putting a password inside of it is not the best practice, as the network is local,
 the risk is minimal, I could add an .env file only for the password later if necessary.
 
-If you really don't want to put your password inside the config file, you can create a `config.dev.yaml` and set the 
-`get_config()` first parameter to true.
+If you really don't want to put your password inside the config file, you can create a `config.dev.yaml` next to the original `config.yaml` and set the `get_config()` first parameter to true inside the `app.py`. I added it to the `.gitignore` for my own config.
 
 ```py
 config = ConfigParser.get_config(True)
