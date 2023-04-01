@@ -40,14 +40,31 @@ Someone contacted me to add this feature, so it'll be the perfect example of wha
 
 <img src="https://raw.githubusercontent.com/yoratoni/huawei-router-sms-forwarding/main/doc/Provider.png" width="600">
 
-The Internet provider that he uses limits the internet speed after a 20GB daily usage, his provider then
+The Internet provider that this person uses limits the internet speed after a 20GB daily usage, his provider then
 sends a message informing him that the connection speed is now limited to 64/64kbps (download/upload), and that
 if he wants 20 more GBs, he needs to send "NADALJUJ" ("CONTINUE" in Slovene), a great way to do that could be
 to use the replier system:
 
 <img src="https://raw.githubusercontent.com/yoratoni/huawei-router-sms-forwarding/main/doc/Replier%20Example.png" width="600">
 
-<img src="https://raw.githubusercontent.com/yoratoni/huawei-router-sms-forwarding/main/doc/Replier%20Result.png" width="400">
+So now, if the number `+33123456789` sends a message that contains `Obvescamo vas, da ste presegli celotno kolicino`
+at any place inside of it, the router will send `NADALJUJ` back.
+
+<img src="https://raw.githubusercontent.com/yoratoni/huawei-router-sms-forwarding/f4f137f545320f12baf1b9aa24f5fc77a0013aa8/doc/Replier%20Result.png" width="400">
+
+Of course , multiple repliers can be added, and multiple filters too:
+
+```yaml
+repliers:
+  - phone_number: "+33123456789"
+    messages:
+      - filter: "HI"
+        reply: "HELLO"
+      - filter: "HELLO"
+        reply: "HI"
+  - phone_number: "+33 9 87 65 43 21" # Supporting spaces
+    ...
+```
 
 
 History:
