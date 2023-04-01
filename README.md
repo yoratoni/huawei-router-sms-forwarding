@@ -8,7 +8,7 @@ The problem with that is that you need to access your Huawei router interface on
 So this app allows you to transfer these received SMS to your phone, or to automatically reply to them.
 
 **Credits:** <br />
-This program uses the [Huawei LTE API](https://github.com/Salamek/huawei-lte-api) created by [Salamek](Salamek).
+This program uses the [Huawei LTE API](https://github.com/Salamek/huawei-lte-api) created by [Salamek](https://github.com/Salamek).
 
 
 Features:
