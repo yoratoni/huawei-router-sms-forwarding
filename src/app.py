@@ -1,5 +1,6 @@
-from libs import HuaweiWrapper, AppHistory, ConfigParser
-from timeit import default_timer as timer
+from libs.huawei_wrapper import HuaweiWrapper
+from libs.config_parser import ConfigParser
+from libs.app_history import AppHistory
 from libs import logger
 
 import time
