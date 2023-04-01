@@ -36,13 +36,13 @@ config = ConfigParser.get_config(True)
 
 Repliers:
 ---------
-
+![](https://raw.githubusercontent.com/yoratoni/huawei-router-sms-forwarding/main/doc/Provider.png "History example")
 
 History:
 --------
 Here's an example of a forwarded SMS inside the history, the history can be found inside `/logs/history.json`.
 
-![](https://raw.githubusercontent.com/yoratoni/huawei-router-sms-forwarding/1e445925ef691eb0ec1bd2283fb7a959093d13cf/doc/History.png "History example")
+![](https://raw.githubusercontent.com/yoratoni/huawei-router-sms-forwarding/main/doc/History.png "History example")
 
 **Details**: <br />
 - "40086" corresponds to the SMS ID (used by the router to identify every SMS).
