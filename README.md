@@ -36,7 +36,16 @@ config = ConfigParser.get_config(True)
 
 Repliers:
 ---------
-![](https://raw.githubusercontent.com/yoratoni/huawei-router-sms-forwarding/main/doc/Provider.png "History example")
+Someone contacted me to add this feature, so it'll be the perfect example of what can be done with it:
+
+![](https://raw.githubusercontent.com/yoratoni/huawei-router-sms-forwarding/71e73bd0ad2b20cc847a335b67ba1974a03d35d8/doc/Provider.png "History example")
+
+The Internet provider that he uses limits the internet speed after 20GB used daily, his provider then
+sends a message that informs him that the speed is now limited to 64/64kbps (download/upload), and that
+if he wants 20 more GBs, he needs to send "NADALJUJ" ("CONTINUE" in Slovene), a great way to do that could be
+to use the replier system:
+
+
 
 History:
 --------
