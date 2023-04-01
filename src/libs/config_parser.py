@@ -1,4 +1,4 @@
-from libs.logger import pyprint, LogTypes
+from libs import logger
 from typing import Union
 
 import yaml
@@ -35,7 +35,7 @@ class ConfigParser:
             with open(yaml_path, "r") as yaml_file:
                 return yaml.safe_load(yaml_file)
         else:
-            pyprint(LogTypes.CRITICAL, "The config.yaml file cannot be found, please, check that you renamed the file 'example.yaml' to 'config.yaml'", True)
+            logger.critical("The config.yaml file cannot be found, please, check that you renamed the file 'example.yaml' to 'config.yaml'")
             sys.exit(1)
 
     @staticmethod
@@ -64,12 +64,12 @@ class ConfigParser:
 
         # Check if the first character is a +
         if phone_number[0] != "+":
-            pyprint(LogTypes.CRITICAL, f"The phone number must start with a + [{phone_number}]", True)
+            logger.critical(f"The phone number must start with a + [{phone_number}]")
             sys.exit(1)
 
         # Check if the phone number is valid
         if not phone_number[1:].isdigit():
-            pyprint(LogTypes.CRITICAL, f"The phone number must contain only numbers [{phone_number}]", True)
+            logger.critical(f"The phone number must contain only numbers [{phone_number}]")
             sys.exit(1)
 
         return phone_number
@@ -137,12 +137,12 @@ class ConfigParser:
                     # Ignores the empty placeholders
                     if formatted_phone_number != "":
                         if contact["name"] == "":
-                            pyprint(LogTypes.CRITICAL, f"Empty name for contact: {contact}", True)
+                            logger.critical(f"Empty name for contact: {contact}")
                             sys.exit(1)
 
                         res["CONTACTS"][formatted_phone_number] = contact["name"] # type: ignore
                 else:
-                    pyprint(LogTypes.WARN, f"Invalid contact: {contact}", True)
+                    logger.warning(f"Invalid contact: {contact}")
 
         # Get forwarders data
         if "forwarders" in yaml_dict:
@@ -159,7 +159,7 @@ class ConfigParser:
                     if formatted_phone_number != "":
                         res["FORWARDERS"][formatted_phone_number] = formatted_whitelist # type: ignore
                 else:
-                    pyprint(LogTypes.WARN, f"Invalid forwarder: {forwarder}", True)
+                    logger.warning(f"Invalid forwarder: {forwarder}")
 
         # Get repliers data
         if "repliers" in yaml_dict:
@@ -176,7 +176,7 @@ class ConfigParser:
         # Verify if the data is valid
         for key in res:
             if res[key] is None:
-                pyprint(LogTypes.CRITICAL, f"Invalid config: {key} is None", True)
+                logger.critical(f"Invalid config: {key} is None")
                 sys.exit(1)
 
         return res

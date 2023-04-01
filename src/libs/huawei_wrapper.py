@@ -3,7 +3,7 @@ from huawei_lte_api import exceptions as HuaweiExceptions
 from huawei_lte_api.enums.sms import BoxTypeEnum, SortTypeEnum
 from huawei_lte_api.Client import Client
 
-from libs.logger import pyprint, LogTypes
+from libs import logger
 from libs.config_parser import ConfigParser
 from libs.app_history import AppHistory
 from datetime import datetime
@@ -34,35 +34,23 @@ class HuaweiWrapper:
                 or None if it can't connect to the API.
         """
 
-        log_state = None
-        log_msg = None
         client = None
 
         try:
             client = Client(AuthorizedConnection(uri))
-            log_state = LogTypes.INFO
-            log_msg = "Successfully connected to the router"
+            logger.info("Successfully connected to the router")
 
         except HuaweiExceptions.ResponseErrorLoginRequiredException:
-            log_state = LogTypes.WARN
-            log_msg = "Expired session, login again in the next loop"
+            logger.warning("Expired session, login again in the next loop")
 
         except HuaweiExceptions.LoginErrorAlreadyLoginException:
-            log_state = LogTypes.WARN
-            log_msg = textwrap.dedent(f"""\
+            logger.warning(textwrap.dedent(f"""\
                 Client is already logged in but a new attempt has been made,
                 wait until the Huawei router automatically disconnect old clients.
-                """)
+                """))
 
         except Exception as err:
-            log_state = LogTypes.CRITICAL
-            log_msg = f"Router connection failed! Please check the config settings [{err}]"
-
-        # Main log
-        pyprint(log_state, log_msg, True)
-
-        # Critical exception catch
-        if log_state == LogTypes.CRITICAL:
+            logger.critical(f"Router connection failed! Please check the config settings [{err}]")
             sys.exit(1)
 
         return client
@@ -86,7 +74,7 @@ class HuaweiWrapper:
         iteration = 0
 
         while client is None:
-            pyprint(LogTypes.INFO, "Trying to connect to the router..")
+            logger.info("Trying to connect to the router..")
             client = HuaweiWrapper.connect_to_api(uri)
 
             if iteration > inf_loop_limit:
@@ -110,7 +98,7 @@ class HuaweiWrapper:
                     Huawei E5577Cs-321
                 """)
 
-                pyprint(LogTypes.CRITICAL, error_msg, True)
+                logger.critical(error_msg)
                 sys.exit(1)
 
             iteration += 1
@@ -137,7 +125,7 @@ class HuaweiWrapper:
                 client.user.logout()
                 AppHistory.save_history()
                 print("\n")
-                pyprint(LogTypes.INFO, "Successfully disconnected from the router")
+                logger.info("Successfully disconnected from the router")
         except Exception:
             pass
 
@@ -249,11 +237,10 @@ class HuaweiWrapper:
                 sms = None
 
             # Verify that the last sent SMS have not the same ID
-            sms_uniqueness = HuaweiWrapper.unique_sms_id_check(sms)
+            is_sms_unique = HuaweiWrapper.unique_sms_id_check(sms)
 
-            if sms_uniqueness and sms is not None:
+            if sms is not None and is_sms_unique:
                 # Get useful SMS data
-                sms_date = sms["Date"]
                 sms_sender = sms["Phone"]
 
                 # Set the SMS status to read
@@ -261,12 +248,12 @@ class HuaweiWrapper:
                     client.sms.set_read(int(sms["Index"]))
 
                 # Main Log
-                pyprint(LogTypes.DATA, f"({sms_date}) New SMS received from {sms_sender}")
+                logger.info(f"New SMS received from {sms_sender}")
             else:
-                pyprint(LogTypes.INFO, "No new SMS found..")
+                logger.info("No new SMS found..")
 
         except Exception as err:
-            pyprint(LogTypes.ERROR, f"Last SMS received by the router cannot be returned [{err}]", True)
+            logger.error(f"Last SMS received by the router cannot be returned [{err}]")
             return None
 
         # If the sender is inside the contacts dict, add a "Contact" field to the SMS dict
@@ -357,15 +344,15 @@ class HuaweiWrapper:
             error_reason = err
 
         if not gen_state:
-            pyprint(LogTypes.ERROR, f"SMS cannot be sent to {phone_number} [{error_reason}]", True)
+            logger.error(f"SMS cannot be sent to {phone_number} [{error_reason}]")
         else:
-            pyprint(LogTypes.SUCCESS, f"SMS correctly forwarded to {phone_number}", True)
+            logger.info(f"SMS correctly sent to {phone_number}")
 
         return gen_state
 
 
     @staticmethod
-    def forward_sms(
+    def sms_forwarder(
         client: Client,
         sms: Optional[dict[str, str]],
         forwarders: dict[str, list[str]]
@@ -403,10 +390,50 @@ class HuaweiWrapper:
                         else:
                             AppHistory.add_to_history(sms)
                     else:
-                        pyprint(LogTypes.WARN, f"SMS from {sms['Phone']} has been ignored (not whitelisted)")
+                        logger.warning(f"SMS from {sms['Phone']} has been ignored (not whitelisted)")
 
                 return api_res
             else:
-                pyprint(LogTypes.WARN, "This SMS seems to have been already sent once")
+                logger.warning("This SMS seems to have been already sent once")
+
+        return False
+
+
+    @staticmethod
+    def sms_replier(
+        client: Client,
+        sms: Optional[dict[str, str]],
+        repliers: dict[str, str]
+    ) -> bool:
+        """
+        Allows to reply to a SMS with a filter inside of it, with a custom message.
+
+        Args:
+            client (Client): Returned from HuaweiWrapper.api_connection_loop().
+            sms (Optional[dict[str, str]]): Original SMS dictionary.
+            repliers (dict[str, str]): Dict of filters and replies.
+
+        Returns:
+            bool: If the reply has successfully been sent.
+        """
+
+        if sms is not None and "Index" in sms:
+            # Get the replier for the sender
+            if sms["Phone"] in repliers.keys():
+                replier = repliers[sms["Phone"]]
+
+                # Get all the filtered messages and their replies
+                for message in replier:
+                    sms_content = sms["Content"].lower()
+
+                    # Check if the message contains the filter
+                    if message["filter"].lower() in sms_content: # type: ignore
+                        HuaweiWrapper.send_sms(
+                            client,
+                            message["reply"], # type: ignore
+                            sms["Phone"]
+                        )
+
+                        return True
 
         return False

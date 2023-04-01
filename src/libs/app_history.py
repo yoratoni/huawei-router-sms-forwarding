@@ -1,4 +1,4 @@
-from libs.logger import pyprint, LogTypes
+from libs import logger
 from typing import Optional
 from copy import deepcopy
 
@@ -43,7 +43,7 @@ class AppHistory:
                 sep_sms.pop("Priority")
                 sep_sms.pop("SmsType")
             except KeyError as err:
-                pyprint(LogTypes.ERROR, f"SMS could not be parsed [{err}]", True)
+                logger.error(f"SMS could not be parsed [{err}]")
 
             # Add to the history general dict
             AppHistory.history[sms_id] = sep_sms
@@ -73,8 +73,6 @@ class AppHistory:
             json.dump(AppHistory.history, history_file, indent=4)
             return True
 
-        return False
-
 
     @staticmethod
     def load_history() -> bool:
@@ -92,7 +90,7 @@ class AppHistory:
         # Creates the file if not initialized
         if not os.path.exists(AppHistory.HISTORY_PATH):
             AppHistory.save_history()
-            pyprint(LogTypes.INFO, f"History file created")
+            logger.info(f"History file created")
             return False
 
         with open(AppHistory.HISTORY_PATH, "r") as history_file:
@@ -105,6 +103,6 @@ class AppHistory:
 
                 return True
             except json.JSONDecodeError as err:
-                pyprint(LogTypes.ERROR, f"History file could not be loaded [{err}]", True)
+                logger.error(f"History file could not be loaded [{err}]")
 
         return False

@@ -1,23 +1,31 @@
 from libs import HuaweiWrapper, AppHistory, ConfigParser
-from libs.logger import pyprint, LogTypes
+from timeit import default_timer as timer
+from libs import logger
 
 import time
 
 
 client = None
-config = ConfigParser.get_config()
+config = ConfigParser.get_config(True)
 AppHistory.load_history()
 
 while True:
     try:
         client = HuaweiWrapper.api_connection_loop(client, config["ROUTER_URI"]) # type: ignore
-        last_sms = HuaweiWrapper.get_last_sms(client, config["CONTACTS"], True) # type: ignore
+        last_sms = HuaweiWrapper.get_last_sms(client, config["CONTACTS"], True, False) # type: ignore
 
         # Main SMS forwarding function
-        HuaweiWrapper.forward_sms(
+        HuaweiWrapper.sms_forwarder(
             client,
             last_sms,
             config["FORWARDERS"] # type: ignore
+        )
+
+        # Main SMS replying function
+        HuaweiWrapper.sms_replier(
+            client,
+            last_sms,
+            config["REPLIERS"] # type: ignore
         )
 
         # Saves the history every loop
@@ -28,6 +36,6 @@ while True:
     # Disconnect from the router if possible
     except KeyboardInterrupt:
         HuaweiWrapper.disconnect(client)
-    # except Exception as err:
-    #     pyprint(LogTypes.CRITICAL, f"Something went wrong! [{err}]")
-    #     HuaweiWrapper.disconnect(client)
+    except Exception as err:
+        logger.critical(f"Something went wrong! [{err}]")
+        HuaweiWrapper.disconnect(client)
