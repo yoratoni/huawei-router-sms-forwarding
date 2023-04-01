@@ -22,13 +22,15 @@ router:
   password: ""
 
   # Delay between iteration of the loop, checks if a SMS has been received (in seconds).
-  loop: 4
+  loop: 2
 
 
 # (For the forwarders only) Allows to link a phone number to a contact name.
 contacts:
   - phone_number: ""
     name: ""
+  # - phone_number: ""
+  #   name: ""
 
 
 # A forwarder allows the SMS received by the router to be sent to a phone number.
@@ -36,6 +38,8 @@ contacts:
 forwarders:
   - phone_number: ""
     whitelist: []
+  # - phone_number: ""
+  #   whitelist: []
 
 
 # A replier allows to reply something to a phone number in the case of a received filter message.
@@ -45,3 +49,7 @@ repliers:
     messages:
       - filter: ""
         reply: ""
+  # - phone_number: ""
+  #   messages:
+  #     - filter: ""
+  #       reply: ""
