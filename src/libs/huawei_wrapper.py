@@ -434,6 +434,8 @@ class HuaweiWrapper:
                             sms["Phone"]
                         )
 
+                        AppHistory.add_to_history(sms)
+
                         return True
 
         return False
