@@ -7,7 +7,7 @@ import time
 
 
 client = None
-config = ConfigParser.get_config(True)
+config = ConfigParser.get_config()
 AppHistory.load_history()
 
 while True:
