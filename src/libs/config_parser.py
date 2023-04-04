@@ -62,11 +62,6 @@ class ConfigParser:
         # Remove spaces
         phone_number = phone_number.replace(" ", "")
 
-        # Check if the first character is a +
-        if phone_number[0] != "+":
-            logger.critical(f"The phone number must start with a + [{phone_number}]")
-            sys.exit(1)
-
         # Check if the phone number is valid
         if not phone_number[1:].isdigit():
             logger.critical(f"The phone number must contain only numbers [{phone_number}]")
