@@ -43,7 +43,7 @@ class AppHistory:
                 sep_sms.pop("Priority")
                 sep_sms.pop("SmsType")
             except KeyError as err:
-                logger.error(f"SMS could not be parsed [{err}]")
+                logger.error(f"SMS could not be parsed:\n{err}")
 
             # Add to the history general dict
             AppHistory.history[sms_id] = sep_sms
@@ -61,17 +61,34 @@ class AppHistory:
             bool: True if the history has been correctly saved.
         """
 
+        # Directory creation
+        if not os.path.exists(os.path.dirname(AppHistory.HISTORY_PATH)):
+            try:
+                os.makedirs(os.path.dirname(AppHistory.HISTORY_PATH))
+            except OSError as err:
+                logger.error(f"History directory could not be created:\n{err}")
+
         # Detects file creation (prevents empty history dict catching)
         file_exists = os.path.exists(AppHistory.HISTORY_PATH)
 
-        with open(AppHistory.HISTORY_PATH, "w+") as history_file:
-            # Empty history dict catch
-            if len(AppHistory.history) == 0:
-                if file_exists:
-                    return False
+        try:
+            with open(AppHistory.HISTORY_PATH, "w+") as history_file:
+                # Empty history dict catch
+                if len(AppHistory.history) == 0:
+                    if file_exists:
+                        return False
 
-            json.dump(AppHistory.history, history_file, indent=4)
-            return True
+                json.dump(AppHistory.history, history_file, indent=4)
+
+                logger.info(f"History file created")
+
+                return True
+        except FileNotFoundError as err:
+            logger.warning(f"History file could not be found:\n{err}")
+        except PermissionError as err:
+            logger.warning(f"History file could not be written:\n{err}")
+
+        return False
 
 
     @staticmethod
@@ -89,20 +106,24 @@ class AppHistory:
 
         # Creates the file if not initialized
         if not os.path.exists(AppHistory.HISTORY_PATH):
-            AppHistory.save_history()
-            logger.info(f"History file created")
-            return False
+            history_state = AppHistory.save_history()
+            return history_state
 
-        with open(AppHistory.HISTORY_PATH, "r") as history_file:
-            try:
-                AppHistory.history = json.load(history_file)
+        try:
+            with open(AppHistory.HISTORY_PATH, "r") as history_file:
+                try:
+                    AppHistory.history = json.load(history_file)
 
-                # Removes the sample line
-                if "-1" in AppHistory.history:
-                    AppHistory.history.pop("-1")
+                    # Removes the sample line
+                    if "-1" in AppHistory.history:
+                        AppHistory.history.pop("-1")
 
-                return True
-            except json.JSONDecodeError as err:
-                logger.error(f"History file could not be loaded [{err}]")
+                    return True
+                except json.JSONDecodeError as err:
+                    logger.error(f"History file could not be loaded:\n{err}")
+        except FileNotFoundError as err:
+            logger.warning(f"History file could not be found:\n{err}")
+        except PermissionError as err:
+            logger.warning(f"History file could not be read:\n{err}")
 
         return False

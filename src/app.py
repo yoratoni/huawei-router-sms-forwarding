@@ -8,7 +8,7 @@ import time
 
 client = None
 config = ConfigParser.get_config()
-AppHistory.load_history()
+history = AppHistory.load_history()
 
 while True:
     try:
@@ -30,7 +30,8 @@ while True:
         )
 
         # Saves the history every loop
-        AppHistory.save_history()
+        if history:
+            AppHistory.save_history()
 
         time.sleep(config["ROUTER_LOOP_SLEEP"]) # type: ignore
 
@@ -38,5 +39,5 @@ while True:
     except KeyboardInterrupt:
         HuaweiWrapper.disconnect(client)
     except Exception as err:
-        logger.critical(f"Something went wrong! [{err}]")
+        logger.critical(f"Something went wrong!\n{err}")
         HuaweiWrapper.disconnect(client)

@@ -50,7 +50,7 @@ class HuaweiWrapper:
                 """))
 
         except Exception as err:
-            logger.critical(f"Router connection failed! Please check the config settings [{err}]")
+            logger.critical(f"Router connection failed! Please check the config settings\n{err}")
             sys.exit(1)
 
         return client
@@ -253,7 +253,7 @@ class HuaweiWrapper:
                 logger.info("No new SMS found..")
 
         except Exception as err:
-            logger.error(f"Last SMS received by the router cannot be returned [{err}]")
+            logger.error(f"Last SMS received by the router cannot be returned\n{err}")
             return None
 
         # If the sender is inside the contacts dict, add a "Contact" field to the SMS dict
@@ -344,7 +344,7 @@ class HuaweiWrapper:
             error_reason = err
 
         if not gen_state:
-            logger.error(f"SMS cannot be sent to {phone_number} [{error_reason}]")
+            logger.error(f"SMS cannot be sent to {phone_number}\n{error_reason}")
         else:
             logger.info(f"SMS correctly sent to {phone_number}")
 
