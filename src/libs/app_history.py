@@ -78,9 +78,12 @@ class AppHistory:
                     if file_exists:
                         return False
 
-                json.dump(AppHistory.history, history_file, indent=4)
+                # Empty dicts are not really supported by json.dump()
+                # And json.load() returns an error if the file is empty
+                # So a sample line is added
+                AppHistory.history["-1"] = "-1" # type: ignore
 
-                logger.info(f"History file created")
+                json.dump(AppHistory.history, history_file, indent=4)
 
                 return True
         except FileNotFoundError as err:

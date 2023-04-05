@@ -12,30 +12,38 @@ class ConfigParser:
     """
 
     @staticmethod
-    def load_yaml(devConfig: bool = False):
+    def load_yaml():
         """
         Loads the .yaml file and returns it as a dict.
 
-        Args:
-            devConfig (bool, optional): If True, the function will load the config.dev.yaml file (defaults to False).
+        Note:
+            Check if config.dev.yaml exists, if not, load config.yaml.
 
         Returns:
             dict: Parsed dict containing the .yaml file config.
         """
 
-        if devConfig:
-            filename = "config.dev.yaml"
+        # Path to the .yaml files
+        config_dev_path = os.path.join(os.path.dirname(sys.argv[0]), "config.dev.yaml")
+        config_path = os.path.join(os.path.dirname(sys.argv[0]), "config.yaml")
+        final_path = None
+
+        # Check if config.dev.yaml exists, if not, load config.yaml
+        if os.path.exists(config_dev_path):
+            logger.info("Loading config.dev.yaml")
+            final_path = config_dev_path
+        elif os.path.exists(config_path):
+            logger.info("Loading config.yaml")
+            final_path = config_path
         else:
-            filename = "config.yaml"
+            logger.critical("The config.yaml file cannot be found, please, check that 'config.yaml' exists")
+            sys.exit(1)
 
-        # Path to the .yaml file (app.py main file to get the path)
-        yaml_path = os.path.join(os.path.dirname(sys.argv[0]), filename)
-
-        if os.path.exists(yaml_path):
-            with open(yaml_path, "r") as yaml_file:
+        try:
+            with open(final_path, "r") as yaml_file:
                 return yaml.safe_load(yaml_file)
-        else:
-            logger.critical("The config.yaml file cannot be found, please, check that you renamed the file 'example.yaml' to 'config.yaml'")
+        except Exception as err:
+            logger.critical(f"Something went wrong while loading the .yaml file:\n{err}")
             sys.exit(1)
 
     @staticmethod
@@ -70,7 +78,7 @@ class ConfigParser:
         return phone_number
 
     @staticmethod
-    def get_config(devConfig: bool = False) -> dict[str, Union[str, list[str], int, None, dict[str, str]]]:
+    def get_config() -> dict[str, Union[str, list[str], int, None, dict[str, str]]]:
         """
         Returns a dict containing the parsed .yaml file
         with all the data used by the app.
@@ -85,9 +93,6 @@ class ConfigParser:
             - CONTACTS: Dict containing all the contacts.
             - FORWARDERS: Dict containing all the forwarders.
             - REPLIERS: Dict containing all the repliers.
-
-        Args:
-            devConfig (bool, optional): If True, the function will load the config.dev.yaml file (defaults to False).
 
         Returns:
             dict: Parsed dict containing all the .yaml file config.
@@ -106,7 +111,7 @@ class ConfigParser:
         }
 
         # Loads the .yaml file
-        yaml_dict = ConfigParser.load_yaml(devConfig)
+        yaml_dict = ConfigParser.load_yaml()
 
         # Get router data
         res["ROUTER_IP_ADDRESS"] = yaml_dict["router"]["ip_address"]
