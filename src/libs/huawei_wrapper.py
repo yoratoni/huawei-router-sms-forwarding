@@ -418,21 +418,31 @@ class HuaweiWrapper:
         """
 
         if sms is not None and "Index" in sms:
-            # Get the replier for the sender
+            # If the phone number is inside the repliers dict
             if sms["Phone"] in repliers.keys():
+                print("SMS Replier:", sms["Phone"])
+                print("Repliers:", repliers)
+
                 replier = repliers[sms["Phone"]]
+
+                print("Replier:", replier)
 
                 # Get all the filtered messages and their replies
                 for message in replier:
                     sms_content = sms["Content"].lower()
 
+                    print("SMS Content:", sms_content)
+                    print("Message Filter:", message["filter"]) # type: ignore
+
                     # Check if the message contains the filter
                     if message["filter"].lower() in sms_content: # type: ignore
-                        HuaweiWrapper.send_sms(
+                        test = HuaweiWrapper.send_sms(
                             client,
                             message["reply"], # type: ignore
                             sms["Phone"]
                         )
+
+                        print("Is the SMS properly sent:", test)
 
                         AppHistory.add_to_history(sms)
 
