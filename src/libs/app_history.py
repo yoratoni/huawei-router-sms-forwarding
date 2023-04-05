@@ -78,11 +78,6 @@ class AppHistory:
                     if file_exists:
                         return False
 
-                # Empty dicts are not really supported by json.dump()
-                # And json.load() returns an error if the file is empty
-                # So a sample line is added
-                AppHistory.history["-1"] = "-1" # type: ignore
-
                 json.dump(AppHistory.history, history_file, indent=4)
 
                 return True
@@ -117,16 +112,17 @@ class AppHistory:
                 try:
                     AppHistory.history = json.load(history_file)
 
-                    # Removes the sample line
-                    if "-1" in AppHistory.history:
-                        AppHistory.history.pop("-1")
-
                     return True
                 except json.JSONDecodeError as err:
-                    logger.error(f"History file could not be loaded:\n{err}")
+                    # Empty files support (json.load() returns an error)
+                    AppHistory.history = {}
+
+                    return True
         except FileNotFoundError as err:
             logger.warning(f"History file could not be found:\n{err}")
         except PermissionError as err:
             logger.warning(f"History file could not be read:\n{err}")
+        except Exception as err:
+            logger.error(f"History file could not be loaded:\n{err}")
 
         return False
