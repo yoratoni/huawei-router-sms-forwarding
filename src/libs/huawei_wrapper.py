@@ -2,16 +2,22 @@ from huawei_lte_api.AuthorizedConnection import AuthorizedConnection
 from huawei_lte_api import exceptions as HuaweiExceptions
 from huawei_lte_api.enums.sms import BoxTypeEnum, SortTypeEnum
 from huawei_lte_api.Client import Client
+from huawei_lte_api.Session import SetResponseType
 
 from libs import logger
 from libs.config_parser import ConfigParser
 from libs.app_history import AppHistory
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional, Union
+from enum import Enum
 
 import textwrap
 import time
 import sys
+
+
+class ErrorCodes(Enum):
+    SMS_CANNOT_BE_RETURNED = "ERROR:SMS_CANNOT_BE_RETURNED"
 
 
 class HuaweiWrapper:
@@ -111,12 +117,13 @@ class HuaweiWrapper:
 
 
     @staticmethod
-    def disconnect(client: Optional[Client]):
+    def disconnect(client: Optional[Client], exit_system: bool = True) -> None:
         """
         Try-except disconnection from the Huawei Router.
 
         Args:
             client (Client, optional): To test if the client is already connected.
+            exit_system (bool, optional): To exit the system or not.
         """
 
         try:
@@ -129,7 +136,8 @@ class HuaweiWrapper:
         except Exception:
             pass
 
-        sys.exit(1)
+        if exit_system:
+            sys.exit(1)
 
 
     @staticmethod
@@ -190,12 +198,13 @@ class HuaweiWrapper:
         contacts: dict[str, str],
         ignore_read: bool = True,
         dont_set_to_read: bool = False
-    ) -> Optional[dict[str, str]]:
+    ) -> Optional[Union[dict[str, str], Literal[ErrorCodes.SMS_CANNOT_BE_RETURNED]]]:
         """
         Returns the last sms received by the router with unread priority.
 
         Note:
-            Also adds a "Contact" field to the SMS dict if the sender is inside the contacts dict.
+            - Also adds a "Contact" field to the SMS dict if the sender is inside the contacts dict.
+            - In the case of an exception, return "ERROR:SMS_CANNOT_BE_RETURNED" (different from None if no new SMS).
 
         Args:
             client (Client): The API client.
@@ -204,8 +213,9 @@ class HuaweiWrapper:
             dont_set_to_read (bool): If True, doesn't set the SMS to read (defaults to False).
 
         Returns:
-            Optional[dict[str, str]]: A dict containing all the SMS info,
-                None if no SMS found or if the SMS is already read and "ignore_read" is set to True.
+            Optional[Union[dict[str, str], Literal[ErrorCodes.SMS_CANNOT_BE_RETURNED]]]: A dict
+                containing all the SMS info, None if no SMS found or if the SMS is already
+                read and "ignore_read" is set to True.
         """
 
         sms: Optional[dict[str, str]] = None
@@ -254,7 +264,7 @@ class HuaweiWrapper:
 
         except Exception as err:
             logger.error(f"Last SMS received by the router cannot be returned\n{err}")
-            return None
+            return ErrorCodes.SMS_CANNOT_BE_RETURNED
 
         # If the sender is inside the contacts dict, add a "Contact" field to the SMS dict
         if sms is not None:
@@ -327,6 +337,7 @@ class HuaweiWrapper:
 
         gen_state = False
         error_reason = ""
+        sms_request: SetResponseType = "UNKNOWN"
 
         try:
             # Sending SMS request
@@ -344,7 +355,7 @@ class HuaweiWrapper:
             error_reason = err
 
         if not gen_state:
-            logger.error(f"SMS cannot be sent to {phone_number}\n{error_reason}")
+            logger.error(f"SMS cannot be sent to {phone_number}\n{error_reason}\nAPI response: {sms_request}")
         else:
             logger.info(f"SMS correctly sent to {phone_number}")
 
@@ -418,34 +429,29 @@ class HuaweiWrapper:
         """
 
         if sms is not None and "Index" in sms:
-            # If the phone number is inside the repliers dict
-            if sms["Phone"] in repliers.keys():
-                print("SMS Replier:", sms["Phone"])
-                print("Repliers:", repliers)
 
-                replier = repliers[sms["Phone"]]
+            # Avoid duplicata
+            if sms["Index"] != HuaweiWrapper.last_sent_sms_id:
 
-                print("Replier:", replier)
+                # If the phone number is inside the repliers dict
+                if sms["Phone"] in repliers.keys():
 
-                # Get all the filtered messages and their replies
-                for message in replier:
+                    # Get the replier dict from the phone number
+                    replier = repliers[sms["Phone"]]
                     sms_content = sms["Content"].lower()
 
-                    print("SMS Content:", sms_content)
-                    print("Message Filter:", message["filter"]) # type: ignore
+                    # Get all the filtered messages and their replies
+                    for message in replier:
+                        # Check if the message contains the filter
+                        if message["filter"].lower() in sms_content: # type: ignore
+                            HuaweiWrapper.send_sms(
+                                client,
+                                message["reply"], # type: ignore
+                                sms["Phone"]
+                            )
 
-                    # Check if the message contains the filter
-                    if message["filter"].lower() in sms_content: # type: ignore
-                        test = HuaweiWrapper.send_sms(
-                            client,
-                            message["reply"], # type: ignore
-                            sms["Phone"]
-                        )
+                            AppHistory.add_to_history(sms)
 
-                        print("Is the SMS properly sent:", test)
-
-                        AppHistory.add_to_history(sms)
-
-                        return True
+                            return True
 
         return False
