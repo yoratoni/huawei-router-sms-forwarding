@@ -15,7 +15,7 @@ Features:
 ---------
 These features are configurable from the `config.yaml` file at the root of the project (`/src`).
 
-- **Contacts**: Allows you to link a name to a phone number, easier to identify each forwarded number.
+- **Contacts**: Allows you to link a name to a phone number, making it easier to identify each forwarded number.
 - **Forwarders**: The SMS received by the router are forwarded to these numbers, a whitelist can be added
   to redirect only some numbers.
 - **Repliers**: An auto-reply system, if a message is received from a specific number, and this message contains a specified string,
