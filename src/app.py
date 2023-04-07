@@ -25,6 +25,9 @@ while True:
                 config["FORWARDERS"] # type: ignore
             )
 
+            # Waits for 1 second to prevent the router from crashing
+            time.sleep(1)
+
             # Main SMS replying function
             HuaweiWrapper.sms_replier(
                 client,
