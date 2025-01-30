@@ -4,7 +4,7 @@ with SMS received on a 4G Huawei router.
 
 **Why ?** <br />
 As a 4G router takes a SIM card, it has a phone number and can be used to send SMS.
-But everytime you want to send one, you need to access your router interface on the internet,
+But every time you want to send one, you need to access your router interface on the internet,
 so this app allows you to transfer these received SMS directly to your phone, or to automatically reply to them.
 
 **Credits:** <br />
